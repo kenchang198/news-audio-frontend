@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/public/mock-audio/
 
 # next.js
 /.next/
