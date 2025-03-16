@@ -29,7 +29,8 @@ export async function getEpisodesList() {
         episode_id: episode.episode_id,
         title: episode.title,
         created_at: episode.created_at,
-        article_count: episode.articles.length
+        article_count: episode.articles.length,
+        article_titles: episode.articles.map(article => article.title) // 記事タイトルのリストを追加
       };
     });
     
