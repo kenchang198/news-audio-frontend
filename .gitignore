@@ -40,4 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# mock data - not for version control
+/public/mock/
+/public/mock/audio/
+/public/mock/*.json
+
 .prompt/
