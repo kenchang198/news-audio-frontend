@@ -92,3 +92,29 @@ export const getEnglishAudioUrl = (article: any) => {
 export const getJapaneseAudioUrl = (article: any) => {
   return article.japanese_audio_url || '';
 };
+
+/**
+ * エピソード全体の英語音声URLのリストを取得する
+ */
+export const getEpisodeEnglishAudioUrls = (episode: any) => {
+  if (!episode || !episode.articles || !Array.isArray(episode.articles)) {
+    return [];
+  }
+  
+  return episode.articles
+    .filter(article => article.english_audio_url)
+    .map(article => article.english_audio_url);
+};
+
+/**
+ * エピソード全体の日本語音声URLのリストを取得する
+ */
+export const getEpisodeJapaneseAudioUrls = (episode: any) => {
+  if (!episode || !episode.articles || !Array.isArray(episode.articles)) {
+    return [];
+  }
+  
+  return episode.articles
+    .filter(article => article.japanese_audio_url)
+    .map(article => article.japanese_audio_url);
+};

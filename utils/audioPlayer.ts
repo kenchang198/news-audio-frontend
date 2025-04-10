@@ -70,3 +70,59 @@ export const onAudioEnded = (callback: () => void): void => {
   const audio = getAudioInstance();
   audio.onended = callback;
 };
+
+// 現在の再生時間を取得
+export const getCurrentTime = (): number => {
+  const audio = getAudioInstance();
+  return audio.currentTime;
+};
+
+// 総再生時間を取得
+export const getDuration = (): number => {
+  const audio = getAudioInstance();
+  return audio.duration || 0;
+};
+
+// 再生位置を設定
+export const setCurrentTime = (time: number): void => {
+  const audio = getAudioInstance();
+  if (time >= 0 && time <= getDuration()) {
+    audio.currentTime = time;
+  }
+};
+
+// 音量を設定 (0.0〜1.0)
+export const setVolume = (volume: number): void => {
+  const audio = getAudioInstance();
+  if (volume >= 0 && volume <= 1) {
+    audio.volume = volume;
+  }
+};
+
+// 音量を取得
+export const getVolume = (): number => {
+  const audio = getAudioInstance();
+  return audio.volume;
+};
+
+// 時間を「分:秒」形式にフォーマット
+export const formatTime = (timeInSeconds: number): string => {
+  if (isNaN(timeInSeconds)) return '0:00';
+  
+  const minutes = Math.floor(timeInSeconds / 60);
+  const seconds = Math.floor(timeInSeconds % 60);
+  
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+};
+
+// 再生位置の変更時のコールバックを設定
+export const onTimeUpdate = (callback: () => void): void => {
+  const audio = getAudioInstance();
+  audio.ontimeupdate = callback;
+};
+
+// 音声の読み込み完了時のコールバックを設定
+export const onLoadedMetadata = (callback: () => void): void => {
+  const audio = getAudioInstance();
+  audio.onloadedmetadata = callback;
+};

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Article, Language } from '@/types';
 import LanguageToggle from '@/components/ui/LanguageToggle';
+import { useAudio } from '@/contexts/AudioContext';
 
 interface ArticleItemProps {
   article: Article;
@@ -12,10 +13,29 @@ const ArticleItem: React.FC<ArticleItemProps> = ({
   defaultLanguage = 'ja',
 }) => {
   const [language, setLanguage] = useState<Language>(defaultLanguage);
+  const { play } = useAudio();
 
   // 現在の言語の要約テキストと音声URLを取得
   const summary = language === 'ja' ? article.japanese_summary : article.english_summary;
-  const audioUrl = language === 'ja' ? article.japanese_audio_url : article.english_audio_url;
+  const audioUrls = {
+    ja: article.japanese_audio_url,
+    en: article.english_audio_url
+  };
+
+  // 再生ボタンのクリックハンドラ
+  const handlePlay = () => {
+    play(
+      article.id,
+      article.title,
+      audioUrls,
+      language
+    );
+  };
+
+  // 言語切り替えハンドラ
+  const handleLanguageChange = (newLanguage: Language) => {
+    setLanguage(newLanguage);
+  };
 
   return (
     <div className="border rounded-lg p-4 mb-4 bg-white">
@@ -40,7 +60,7 @@ const ArticleItem: React.FC<ArticleItemProps> = ({
         <h4 className="text-md font-medium">
           {language === 'ja' ? '要約' : 'Summary'}
         </h4>
-        <LanguageToggle language={language} onChange={setLanguage} />
+        <LanguageToggle language={language} onChange={handleLanguageChange} />
       </div>
       
       {summary ? (
@@ -59,14 +79,18 @@ const ArticleItem: React.FC<ArticleItemProps> = ({
         <h4 className="text-md font-medium mb-2">
           {language === 'ja' ? '音声' : 'Audio'}
         </h4>
-        {audioUrl ? (
-          <audio
-            controls
-            className="w-full"
-            src={audioUrl}
+        
+        {/* 音声再生ボタン */}
+        {(audioUrls.ja || audioUrls.en) ? (
+          <button 
+            onClick={handlePlay}
+            className="inline-flex items-center rounded-md px-3 py-2 text-sm font-medium bg-blue-500 text-white hover:bg-blue-600"
           >
-            Your browser does not support the audio element.
-          </audio>
+            <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7-11-7z" />
+            </svg>
+            {language === 'ja' ? 'フッターで再生' : 'Play in footer'}
+          </button>
         ) : (
           <div className="text-gray-500 text-sm">
             {language === 'ja'
