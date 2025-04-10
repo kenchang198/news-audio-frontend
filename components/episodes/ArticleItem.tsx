@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Article, Language } from '@/types';
-import AudioPlayer from '@/components/ui/AudioPlayer';
 import LanguageToggle from '@/components/ui/LanguageToggle';
 
 interface ArticleItemProps {
@@ -14,8 +13,9 @@ const ArticleItem: React.FC<ArticleItemProps> = ({
 }) => {
   const [language, setLanguage] = useState<Language>(defaultLanguage);
 
-  // 現在の言語の要約テキストを取得
-  const currentSummary = article.summary?.[language];
+  // 現在の言語の要約テキストと音声URLを取得
+  const summary = language === 'ja' ? article.japanese_summary : article.english_summary;
+  const audioUrl = language === 'ja' ? article.japanese_audio_url : article.english_audio_url;
 
   return (
     <div className="border rounded-lg p-4 mb-4 bg-white">
@@ -27,12 +27,12 @@ const ArticleItem: React.FC<ArticleItemProps> = ({
       
       <div className="text-sm text-gray-500 mb-4">
         <a
-          href={article.url}
+          href={article.link}
           target="_blank"
           rel="noopener noreferrer"
           className="text-blue-500 hover:underline"
         >
-          {article.source}
+          {article.source} - {article.author}
         </a>
       </div>
       
@@ -43,9 +43,9 @@ const ArticleItem: React.FC<ArticleItemProps> = ({
         <LanguageToggle language={language} onChange={setLanguage} />
       </div>
       
-      {currentSummary ? (
+      {summary ? (
         <div className="text-gray-700 mb-4 text-sm">
-          <p>{currentSummary}</p>
+          <p>{summary}</p>
         </div>
       ) : (
         <div className="text-gray-500 mb-4 text-sm">
@@ -59,12 +59,21 @@ const ArticleItem: React.FC<ArticleItemProps> = ({
         <h4 className="text-md font-medium mb-2">
           {language === 'ja' ? '音声' : 'Audio'}
         </h4>
-        <AudioPlayer
-          articleId={article.id}
-          audioUrls={article.audio || {}}
-          language={language}
-          onLanguageChange={setLanguage}
-        />
+        {audioUrl ? (
+          <audio
+            controls
+            className="w-full"
+            src={audioUrl}
+          >
+            Your browser does not support the audio element.
+          </audio>
+        ) : (
+          <div className="text-gray-500 text-sm">
+            {language === 'ja'
+              ? '音声は利用できません'
+              : 'Audio not available'}
+          </div>
+        )}
       </div>
     </div>
   );

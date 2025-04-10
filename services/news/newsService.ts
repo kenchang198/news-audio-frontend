@@ -1,0 +1,94 @@
+import axios from 'axios';
+
+// 環境変数から API の URL を取得
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const USE_MOCK_DATA = !API_BASE_URL || process.env.NODE_ENV === 'development';
+
+// モックデータのパス
+const MOCK_PATH = {
+  episodesList: '/mock/episodes_list.json',
+  latestEpisode: '/mock/news-data.json',
+  episodeById: (id: string) => `/mock/episode_${id}.json`
+};
+
+/**
+ * エピソード一覧を取得する
+ */
+export const fetchEpisodesList = async () => {
+  try {
+    if (USE_MOCK_DATA) {
+      // モックデータを使用
+      const response = await axios.get(MOCK_PATH.episodesList);
+      return response.data;
+    } else {
+      // 本番APIを使用
+      const response = await axios.get(`${API_BASE_URL}/episodes`);
+      return response.data;
+    }
+  } catch (error) {
+    console.error('Failed to fetch episodes list:', error);
+    return [];
+  }
+};
+
+/**
+ * 最新のエピソードを取得する
+ */
+export const fetchLatestEpisode = async () => {
+  try {
+    if (USE_MOCK_DATA) {
+      // モックデータを使用
+      const response = await axios.get(MOCK_PATH.latestEpisode);
+      return response.data;
+    } else {
+      // 本番APIを使用
+      const response = await axios.get(`${API_BASE_URL}/episodes/latest`);
+      return response.data;
+    }
+  } catch (error) {
+    console.error('Failed to fetch latest episode:', error);
+    return null;
+  }
+};
+
+/**
+ * 特定のエピソードをIDで取得する
+ */
+export const fetchEpisodeById = async (episodeId: string) => {
+  try {
+    if (USE_MOCK_DATA) {
+      // モックデータを使用
+      try {
+        // エピソードIDに対応するJSONファイルがあれば取得
+        const response = await axios.get(MOCK_PATH.episodeById(episodeId));
+        return response.data;
+      } catch (e) {
+        // 該当するJSONがない場合は最新のエピソードを返す
+        console.warn(`Episode file for ID ${episodeId} not found, using latest episode`);
+        const response = await axios.get(MOCK_PATH.latestEpisode);
+        return response.data;
+      }
+    } else {
+      // 本番APIを使用
+      const response = await axios.get(`${API_BASE_URL}/episodes/${episodeId}`);
+      return response.data;
+    }
+  } catch (error) {
+    console.error(`Failed to fetch episode with ID ${episodeId}:`, error);
+    return null;
+  }
+};
+
+/**
+ * 記事の英語音声URLを取得する
+ */
+export const getEnglishAudioUrl = (article: any) => {
+  return article.english_audio_url || '';
+};
+
+/**
+ * 記事の日本語音声URLを取得する
+ */
+export const getJapaneseAudioUrl = (article: any) => {
+  return article.japanese_audio_url || '';
+};

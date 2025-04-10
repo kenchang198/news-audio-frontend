@@ -1,9 +1,9 @@
 import React from 'react';
-import { Episode } from '@/types';
+import { EpisodeSummary } from '@/types';
 import Link from 'next/link';
 
 interface EpisodeListProps {
-  episodes: Episode[];
+  episodes: EpisodeSummary[];
 }
 
 const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
@@ -17,25 +17,40 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
 
   return (
     <div className="space-y-4">
-      {episodes.map((episode) => (
-        <div
-          key={episode.id}
-          className="bg-white shadow rounded-lg overflow-hidden hover:shadow-md transition-shadow"
-        >
-          <Link href={`/episodes/${episode.id}`} className="block p-4">
-            <h3 className="text-lg font-medium text-gray-900">
-              {new Date(episode.date).toLocaleDateString('ja-JP', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}のエピソード
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              {episode.articles.length}件の記事
-            </p>
-          </Link>
-        </div>
-      ))}
+      {episodes.map((episode) => {
+        // 日付文字列をDate型に変換
+        const episodeDate = new Date(episode.created_at);
+
+        return (
+          <div
+            key={episode.episode_id}
+            className="bg-white shadow rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+          >
+            <Link href={`/episodes/${episode.episode_id}`} className="block p-4">
+              <h3 className="text-lg font-medium text-gray-900">
+                {episode.title}
+              </h3>
+              <div className="mt-2 flex justify-between items-center">
+                <div className="flex items-center text-sm text-gray-500">
+                  <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-medium">
+                    {episode.source}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-400">
+                  {episodeDate.toLocaleDateString('ja-JP', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </p>
+              </div>
+              <p className="mt-2 text-sm text-gray-500">
+                {episode.article_count}件の記事
+              </p>
+            </Link>
+          </div>
+        );
+      })}
     </div>
   );
 };

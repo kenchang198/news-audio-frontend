@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Layout from '@/components/layout/Layout';
 import EpisodeDetail from '@/components/episodes/EpisodeDetail';
-import { getEpisode } from '@/services/api';
+import { fetchEpisodeById } from '@/services/news/newsService';
 import { Episode } from '@/types';
 
 export default function EpisodeDetailPage() {
@@ -18,14 +18,14 @@ export default function EpisodeDetailPage() {
   const episodeId = params.id as string;
 
   // エピソードデータを取得
-  const fetchEpisode = async () => {
+  const loadEpisode = async () => {
     if (!episodeId) return;
     
     setIsLoading(true);
     setError(null);
     
     try {
-      const data = await getEpisode(episodeId);
+      const data = await fetchEpisodeById(episodeId);
       if (data) {
         setEpisode(data);
       } else {
@@ -42,7 +42,7 @@ export default function EpisodeDetailPage() {
   // 初回レンダリング時にデータを取得
   useEffect(() => {
     if (episodeId) {
-      fetchEpisode();
+      loadEpisode();
     }
   }, [episodeId]);
 

@@ -3,27 +3,22 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import EpisodeList from '@/components/episodes/EpisodeList';
-import Pagination from '@/components/ui/Pagination';
-import { getEpisodes } from '@/services/api';
-import { Episode } from '@/types';
+import { fetchEpisodesList } from '@/services/news/newsService';
+import { EpisodeSummary } from '@/types';
 
 export default function Home() {
-  const [episodes, setEpisodes] = useState<Episode[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [episodes, setEpisodes] = useState<EpisodeSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // エピソードデータを取得
-  const fetchEpisodes = async (page: number) => {
+  const loadEpisodes = async () => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const data = await getEpisodes(page);
-      setEpisodes(data.episodes);
-      setTotalPages(data.totalPages);
-      setCurrentPage(data.currentPage);
+      const data = await fetchEpisodesList();
+      setEpisodes(data);
     } catch (err) {
       setError('エピソードの取得に失敗しました。後でもう一度お試しください。');
       console.error('Failed to fetch episodes:', err);
@@ -32,30 +27,17 @@ export default function Home() {
     }
   };
 
-  // ページ変更時の処理
-  const handlePageChange = (page: number) => {
-    if (page < 1 || page > totalPages) return;
-    setCurrentPage(page);
-    fetchEpisodes(page);
-    
-    // ページトップにスクロール
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  };
-
   // 初回レンダリング時にデータを取得
   useEffect(() => {
-    fetchEpisodes(currentPage);
+    loadEpisodes();
   }, []);
 
   return (
     <Layout>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">エピソード一覧</h1>
+        <h1 className="text-3xl font-bold text-gray-900">ITニュース 音声まとめ</h1>
         <p className="mt-2 text-sm text-gray-500">
-          最新のニュースエピソードをチェックしましょう
+          最新のITニュースをAIが要約し、音声で聴けるサービスです
         </p>
       </div>
 
@@ -79,14 +61,7 @@ export default function Home() {
           </div>
         </div>
       ) : (
-        <>
-          <EpisodeList episodes={episodes} />
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
-        </>
+        <EpisodeList episodes={episodes} />
       )}
     </Layout>
   );

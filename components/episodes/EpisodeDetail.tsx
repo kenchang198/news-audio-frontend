@@ -7,15 +7,22 @@ interface EpisodeDetailProps {
 }
 
 const EpisodeDetail: React.FC<EpisodeDetailProps> = ({ episode }) => {
+  // 日付文字列をDate型に変換
+  const episodeDate = new Date(episode.created_at);
+
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6">
-        {new Date(episode.date).toLocaleDateString('ja-JP', {
+      <h2 className="text-2xl font-bold mb-2">
+        {episode.title}
+      </h2>
+      
+      <div className="text-sm text-gray-500 mb-6">
+        {episodeDate.toLocaleDateString('ja-JP', {
           year: 'numeric',
           month: 'long',
           day: 'numeric',
-        })}のエピソード
-      </h2>
+        })} - {episode.source}
+      </div>
       
       {episode.articles.length === 0 ? (
         <div className="text-center py-10">

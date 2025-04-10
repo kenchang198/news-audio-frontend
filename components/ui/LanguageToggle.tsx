@@ -8,13 +8,13 @@ interface LanguageToggleProps {
 
 const LanguageToggle: React.FC<LanguageToggleProps> = ({ language, onChange }) => {
   return (
-    <div className="inline-flex items-center rounded-md border border-gray-300 overflow-hidden">
+    <div className="inline-flex rounded-md shadow-sm">
       <button
         type="button"
-        className={`px-3 py-1 text-sm ${
+        className={`px-3 py-1 text-sm font-medium rounded-l-md ${
           language === 'ja'
             ? 'bg-blue-500 text-white'
-            : 'bg-white text-gray-700 hover:bg-gray-50'
+            : 'bg-gray-200 text-gray-700'
         }`}
         onClick={() => onChange('ja')}
       >
@@ -22,10 +22,10 @@ const LanguageToggle: React.FC<LanguageToggleProps> = ({ language, onChange }) =
       </button>
       <button
         type="button"
-        className={`px-3 py-1 text-sm ${
+        className={`px-3 py-1 text-sm font-medium rounded-r-md ${
           language === 'en'
             ? 'bg-blue-500 text-white'
-            : 'bg-white text-gray-700 hover:bg-gray-50'
+            : 'bg-gray-200 text-gray-700'
         }`}
         onClick={() => onChange('en')}
       >
