@@ -3,17 +3,19 @@ import { EpisodeSummary, Episode, Language } from '@/types';
 import Link from 'next/link';
 import { fetchEpisodeById, getEpisodeEnglishAudioUrls, getEpisodeJapaneseAudioUrls } from '@/services/news/newsService';
 import { useAudio } from '@/contexts/AudioContext';
+import LanguageToggle from '@/components/ui/LanguageToggle';
 
 interface EpisodeListProps {
   episodes: EpisodeSummary[];
 }
 
 const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
-  const { playPlaylist, nowPlaying, pause, resumePlayback } = useAudio();
+  const { playPlaylist, nowPlaying, pause, resumePlayback, setLanguage } = useAudio();
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [playingEpisodes, setPlayingEpisodes] = useState<Record<string, boolean>>({});
+  const [language, setPreferredLanguage] = useState<Language>('ja');
 
   // 現在再生中のエピソードの状態を監視
   useEffect(() => {
@@ -65,8 +67,13 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
     const englishAudioUrls = getEpisodeEnglishAudioUrls(episode);
     const japaneseAudioUrls = getEpisodeJapaneseAudioUrls(episode);
     
-    // デフォルトは日本語で再生（日本語がなければ英語）
-    const language: Language = japaneseAudioUrls.length > 0 ? 'ja' : 'en';
+    // 選択された言語で再生（対応する言語がなければ他方を使用）
+    let selectedLanguage = language;
+    if (selectedLanguage === 'ja' && japaneseAudioUrls.length === 0) {
+      selectedLanguage = 'en';
+    } else if (selectedLanguage === 'en' && englishAudioUrls.length === 0) {
+      selectedLanguage = 'ja';
+    }
     
     playPlaylist(
       episode.episode_id,
@@ -75,8 +82,18 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
         ja: japaneseAudioUrls,
         en: englishAudioUrls
       },
-      language
+      selectedLanguage
     );
+  };
+  
+  // 言語切り替え処理
+  const handleLanguageChange = (newLanguage: Language) => {
+    setPreferredLanguage(newLanguage);
+    
+    // 現在再生中のエピソードがある場合は言語を切り替える
+    if (nowPlaying?.isPlaylist && nowPlaying.isPlaying) {
+      setLanguage(newLanguage);
+    }
   };
 
   if (episodes.length === 0) {
@@ -95,6 +112,14 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
           {error}
         </div>
       )}
+      
+      {/* 言語切り替え */}
+      <div className="mb-6 flex justify-end">
+        <LanguageToggle 
+          language={language} 
+          onChange={handleLanguageChange} 
+        />
+      </div>
 
       {/* エピソード一覧 */}
       <div className="space-y-4">
