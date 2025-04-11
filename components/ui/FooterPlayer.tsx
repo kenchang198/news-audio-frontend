@@ -4,7 +4,7 @@ import * as audioUtils from '@/utils/audioPlayer';
 import LanguageToggle from './LanguageToggle';
 
 const FooterPlayer: React.FC = () => {
-  const { nowPlaying, pause, stop, nextTrack, prevTrack, setLanguage, isVisible } = useAudio();
+  const { nowPlaying, pause, stop, nextTrack, prevTrack, setLanguage, isVisible, resumePlayback } = useAudio();
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const progressRef = useRef<HTMLDivElement>(null);
@@ -40,25 +40,13 @@ const FooterPlayer: React.FC = () => {
     if (nowPlaying.isPlaying) {
       pause();
     } else {
-      let currentUrl: string | undefined;
-      
-      if (nowPlaying.isPlaylist && nowPlaying.playlistUrls) {
-        // プレイリストの場合
-        const urls = nowPlaying.language === 'ja' ? nowPlaying.playlistUrls.ja : nowPlaying.playlistUrls.en;
-        const index = nowPlaying.currentTrackIndex || 0;
-        currentUrl = urls[index];
-      } else if (nowPlaying.audioUrls) {
-        // 単一音声の場合
-        currentUrl = nowPlaying.language === 'ja' ? nowPlaying.audioUrls.ja : nowPlaying.audioUrls.en;
-      }
-      
-      if (!currentUrl) return;
-
+      // 一時停止から再開する場合
       try {
-        await audioUtils.playAudio(currentUrl);
-        // useAudio コンテキスト経由で状態更新
+        await audioUtils.resumeAudio();
+        // 再生状態をコンテキストに反映
+        resumePlayback();
       } catch (error) {
-        console.error('Failed to play audio:', error);
+        console.error('Failed to resume audio:', error);
       }
     }
   };

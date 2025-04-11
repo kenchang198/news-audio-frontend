@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Language } from '@/types';
 import * as audioUtils from '@/utils/audioPlayer';
 import LanguageToggle from './LanguageToggle';
+import { useAudio } from '@/contexts/AudioContext'; // Import useAudio
 
 interface AudioPlayerProps {
   articleId: string;
@@ -25,10 +26,24 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  // const [lastPlayedUrl, setLastPlayedUrl] = useState<string | null>(null); // Remove local state, rely on context
   const progressRef = useRef<HTMLDivElement>(null);
+  const context = useAudio(); // Get audio context
 
   // 現在の言語に対応する音声URLを取得
   const currentAudioUrl = audioUrls[language];
+
+  // Sync local isPlaying state with global context if this article is the one playing
+  useEffect(() => {
+    const isCurrentGlobal = context.nowPlaying?.articleId === articleId;
+    const globalPlayingState = isCurrentGlobal ? context.nowPlaying?.isPlaying ?? false : false;
+    // Only update local state if it differs from the derived global state
+    if (isPlaying !== globalPlayingState) {
+      setIsPlaying(globalPlayingState);
+    }
+    // Intentionally excluding isPlaying from dependencies to avoid potential loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [context.nowPlaying, articleId]);
 
   // 音声再生が終了したときの処理
   useEffect(() => {
@@ -51,36 +66,53 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     return () => {
       audioUtils.stopAudio();
     };
-  }, []);
+  }, [articleId]); // Added articleId dependency for cleanup association
 
-  // 再生/一時停止の切り替え
-  const togglePlayPause = async () => {
+  // 再生/一時停止の切り替え (Context-aware)
+  const togglePlayPause = useCallback(async () => {
     if (!currentAudioUrl) return;
-    
-    if (isPlaying) {
-      audioUtils.pauseAudio();
-      setIsPlaying(false);
-    } else {
+    const isCurrentGlobal = context.nowPlaying?.articleId === articleId;
+    const isGloballyPlaying = isCurrentGlobal && context.nowPlaying?.isPlaying;
+
+    if (isGloballyPlaying) { // Pausing global player
+      context.pause();
+      // Local state will be updated by useEffect syncing with context
+    } else if (isCurrentGlobal && !isGloballyPlaying) { // Resuming global player
       setIsLoading(true);
       try {
-        await audioUtils.playAudio(currentAudioUrl);
-        setIsPlaying(true);
+        context.resumePlayback(); // Update global state first
+        await audioUtils.resumeAudio(); // Resume hardware
+        // Local state will be updated by useEffect
       } catch (error) {
-        console.error('Failed to play audio:', error);
+        console.error('Failed to resume audio:', error);
+        context.pause(); // Ensure global state is paused on error
       } finally {
         setIsLoading(false);
       }
+    } else { // Playing new/different track - initiate via context
+      setIsLoading(true);
+      try {
+        // Assuming title prop is not available, using a placeholder.
+        // Ideally, the component initiating play should provide the title.
+        context.play(articleId, `Article ${articleId}`, audioUrls, language);
+        // Local state will be updated by useEffect
+      } catch (error) {
+         console.error('Failed to play audio via context:', error);
+         // Context's play function should handle its own errors/state updates
+      } finally {
+         setIsLoading(false);
+      }
     }
-  };
+  }, [currentAudioUrl, context, articleId, audioUrls, language]);
 
-  // 言語が変更されたときに再生を停止
+  // 言語が変更されたときにContext経由で言語を更新
   useEffect(() => {
-    if (isPlaying) {
-      audioUtils.stopAudio();
-      setIsPlaying(false);
-      setCurrentTime(0);
+    // If this player is the current global player and language changes, update context
+    if (context.nowPlaying?.articleId === articleId && context.nowPlaying.language !== language) {
+       context.setLanguage(language);
     }
-  }, [language]);
+    // No direct stop needed here, context handles it.
+  }, [language, context, articleId]);
 
   // 言語切り替え処理
   const handleLanguageChange = (newLanguage: Language) => {

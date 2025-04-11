@@ -36,6 +36,7 @@ interface AudioContextType {
   isVisible: boolean;
   showPlayer: () => void;
   hidePlayer: () => void;
+  resumePlayback: () => void;
 }
 
 const defaultAudioContext: AudioContextType = {
@@ -50,6 +51,7 @@ const defaultAudioContext: AudioContextType = {
   isVisible: false,
   showPlayer: () => {},
   hidePlayer: () => {},
+  resumePlayback: () => {},
 };
 
 const AudioContext = createContext<AudioContextType>(defaultAudioContext);
@@ -64,11 +66,10 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
   const [nowPlaying, setNowPlaying] = useState<NowPlaying | null>(null);
   const [isVisible, setIsVisible] = useState(false);
 
-  // 音声の再生終了を監視
+  // 音声の再生終了を監視 (nowPlaying の変更に依存)
   useEffect(() => {
-    audioUtils.onAudioEnded(() => {
+    const handleAudioEnd = () => {
       if (!nowPlaying) return;
-
       if (nowPlaying.isPlaylist && nowPlaying.playlistUrls) {
         // プレイリストの場合、次のトラックを再生
         const currentIndex = nowPlaying.currentTrackIndex || 0;
@@ -96,13 +97,30 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
       }
       
       // プレイリストの最後または単一トラックの場合
-      setNowPlaying((prev) => prev ? { ...prev, isPlaying: false } : null);
-    });
+      setNowPlaying((prev) => (prev ? { ...prev, isPlaying: false } : null));
+    };
 
+    audioUtils.onAudioEnded(handleAudioEnd);
+
+    // クリーンアップ: リスナーを解除（stopAudio はここでは呼ばない）
     return () => {
+      // リスナー解除のために空の関数を設定するか、audioUtils側で解除メソッドを用意するのが望ましい
+      // 現状の audioUtils に解除メソッドがないため、一旦そのままにするが、
+      // リスナーが重複登録される可能性は低い（audio.onended は上書きされるため）
+      // audioUtils.removeAudioEndedListener(handleAudioEnd); // 仮の解除メソッド呼び出し
+    };
+  }, [nowPlaying]); // nowPlaying の変更を監視してリスナーを再設定
+
+  // コンポーネントのアンマウント時にのみ stopAudio を呼び出す
+  useEffect(() => {
+    // マウント時の処理は不要
+
+    // アンマウント時のクリーンアップ
+    return () => {
+      console.log('AudioProvider unmounting, stopping audio.');
       audioUtils.stopAudio();
     };
-  }, [nowPlaying]);
+  }, []); // 空の依存配列でアンマウント時のみ実行
 
   // 単一の音声を再生
   const play = (articleId: string, title: string, audioUrls: { ja?: string; en?: string }, language: Language) => {
@@ -179,6 +197,12 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
 
     audioUtils.pauseAudio();
     setNowPlaying({ ...nowPlaying, isPlaying: false });
+  };
+
+  // 再生再開（内部専用）
+  const resumePlayback = () => {
+    if (!nowPlaying) return;
+    setNowPlaying({ ...nowPlaying, isPlaying: true });
   };
 
   // 停止
@@ -321,6 +345,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         isVisible,
         showPlayer,
         hidePlayer,
+        resumePlayback,
       }}
     >
       {children}

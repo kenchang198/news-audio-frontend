@@ -1,3 +1,5 @@
+// ソースURLをキャッシュしておく変数
+let cachedAudioSrc: string | null = null;
 let audioInstance: HTMLAudioElement | null = null;
 
 // 音声インスタンスを取得または作成
@@ -17,9 +19,13 @@ export const playAudio = (url: string): Promise<void> => {
   
   console.log('Attempting to play audio from URL:', url);
   
-  // 現在の再生を停止
-  if (audio.src) {
+  // 再生中なら一時停止
+  if (!audio.paused) {
     audio.pause();
+  }
+  
+  // 新しい曲を再生する場合は前の曲のリソースを解放
+  if (audio.src && url !== cachedAudioSrc) {
     audio.currentTime = 0;
     
     // もし現在のURLがblobで始まる場合、それを解放
@@ -61,6 +67,9 @@ export const playAudio = (url: string): Promise<void> => {
       
       // 新しいURLを設定
       audio.src = blobUrl;
+      
+      // URLをキャッシュ
+      cachedAudioSrc = url;
       
       // エラーイベントリスナーを追加
       const handleError = (event: Event) => {
@@ -140,8 +149,16 @@ export const pauseAudio = (): void => {
 // 音声を再開
 export const resumeAudio = (): Promise<void> => {
   const audio = getAudioInstance();
+  console.log('Resuming audio playback from position:', audio.currentTime);
   if (audio.paused && audio.src) {
-    return audio.play();
+    return audio.play()
+      .then(() => {
+        console.log('Audio playback successfully resumed');
+      })
+      .catch((error) => {
+        console.error('Failed to resume audio playback:', error);
+        throw error;
+      });
   }
   return Promise.resolve();
 };
@@ -177,6 +194,7 @@ export const stopAudio = (): void => {
   audio.pause();
   audio.currentTime = 0;
   audio.src = '';
+  cachedAudioSrc = null; // キャッシュもクリア
 };
 
 // 再生が終了したときのコールバックを設定
