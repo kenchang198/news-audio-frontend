@@ -199,10 +199,18 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     setNowPlaying({ ...nowPlaying, isPlaying: false });
   };
 
-  // 再生再開（内部専用）
-  const resumePlayback = () => {
+  // 再生再開
+  const resumePlayback = async () => {
     if (!nowPlaying) return;
-    setNowPlaying({ ...nowPlaying, isPlaying: true });
+    
+    try {
+      // 音声を再開
+      await audioUtils.resumeAudio();
+      setNowPlaying({ ...nowPlaying, isPlaying: true });
+    } catch (error) {
+      console.error('Failed to resume audio playback:', error);
+      setNowPlaying((prev) => prev ? { ...prev, isPlaying: false } : null);
+    }
   };
 
   // 停止

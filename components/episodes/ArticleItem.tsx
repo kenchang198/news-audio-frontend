@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Article, Language } from '@/types';
 import LanguageToggle from '@/components/ui/LanguageToggle';
 import { useAudio } from '@/contexts/AudioContext';
@@ -13,7 +13,17 @@ const ArticleItem: React.FC<ArticleItemProps> = ({
   defaultLanguage = 'ja',
 }) => {
   const [language, setLanguage] = useState<Language>(defaultLanguage);
-  const { play } = useAudio();
+  const [isPlaying, setIsPlaying] = useState(false);
+  const { play, nowPlaying, pause, resumePlayback } = useAudio();
+  
+  // 現在再生中かどうかを監視
+  useEffect(() => {
+    if (nowPlaying?.articleId === article.id) {
+      setIsPlaying(nowPlaying.isPlaying);
+    } else {
+      setIsPlaying(false);
+    }
+  }, [nowPlaying, article.id]);
 
   // 現在の言語の要約テキストと音声URLを取得
   const summary = language === 'ja' ? article.japanese_summary : article.english_summary;
@@ -23,13 +33,22 @@ const ArticleItem: React.FC<ArticleItemProps> = ({
   };
 
   // 再生ボタンのクリックハンドラ
-  const handlePlay = () => {
-    play(
-      article.id,
-      article.title,
-      audioUrls,
-      language
-    );
+  const handlePlayToggle = () => {
+    if (isPlaying) {
+      // 再生中なら停止
+      pause();
+    } else if (nowPlaying?.articleId === article.id && !nowPlaying.isPlaying) {
+      // 一時停止中の同じ記事なら再開
+      resumePlayback();
+    } else {
+      // 新規再生
+      play(
+        article.id,
+        article.title,
+        audioUrls,
+        language
+      );
+    }
   };
 
   // 言語切り替えハンドラ
@@ -76,13 +95,22 @@ const ArticleItem: React.FC<ArticleItemProps> = ({
         {/* 音声再生ボタン - TOPページと同様のデザイン（サイズ小さめ） */}
         {(audioUrls.ja || audioUrls.en) ? (
           <button 
-            onClick={handlePlay}
+            onClick={handlePlayToggle}
             className="p-2 rounded-full bg-blue-500 text-white hover:bg-blue-600 flex items-center justify-center"
-            aria-label={language === 'ja' ? 'フッターで再生' : 'Play in footer'}
+            aria-label={isPlaying 
+              ? (language === 'ja' ? '一時停止' : 'Pause') 
+              : (language === 'ja' ? 'フッターで再生' : 'Play in footer')
+            }
           >
-            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7-11-7z" />
-            </svg>
+            {isPlaying ? (
+              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+              </svg>
+            ) : (
+              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7-11-7z" />
+              </svg>
+            )}
           </button>
         ) : (
           <div className="text-gray-500 text-sm">
