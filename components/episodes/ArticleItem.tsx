@@ -56,10 +56,7 @@ const ArticleItem: React.FC<ArticleItemProps> = ({
         </a>
       </div>
       
-      <div className="mb-4 flex items-center justify-between">
-        <h4 className="text-md font-medium">
-          {language === 'ja' ? '要約' : 'Summary'}
-        </h4>
+      <div className="mb-4 flex items-center justify-end">
         <LanguageToggle language={language} onChange={handleLanguageChange} />
       </div>
       
@@ -76,20 +73,16 @@ const ArticleItem: React.FC<ArticleItemProps> = ({
       )}
       
       <div className="mt-4">
-        <h4 className="text-md font-medium mb-2">
-          {language === 'ja' ? '音声' : 'Audio'}
-        </h4>
-        
-        {/* 音声再生ボタン */}
+        {/* 音声再生ボタン - TOPページと同様のデザイン（サイズ小さめ） */}
         {(audioUrls.ja || audioUrls.en) ? (
           <button 
             onClick={handlePlay}
-            className="inline-flex items-center rounded-md px-3 py-2 text-sm font-medium bg-blue-500 text-white hover:bg-blue-600"
+            className="p-2 rounded-full bg-blue-500 text-white hover:bg-blue-600 flex items-center justify-center"
+            aria-label={language === 'ja' ? 'フッターで再生' : 'Play in footer'}
           >
-            <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M8 5v14l11-7-11-7z" />
             </svg>
-            {language === 'ja' ? 'フッターで再生' : 'Play in footer'}
           </button>
         ) : (
           <div className="text-gray-500 text-sm">
