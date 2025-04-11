@@ -136,7 +136,12 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
   const playPlaylist = (episodeId: string, title: string, playlistUrls: { ja: string[], en: string[] }, language: Language) => {
     const urls = language === 'ja' ? playlistUrls.ja : playlistUrls.en;
     
-    if (!urls.length) return;
+    console.log('Playing playlist with urls:', urls);
+    
+    if (!urls.length) {
+      console.warn('No audio URLs available for this playlist');
+      return;
+    }
 
     // 既に再生中の場合は停止
     if (nowPlaying?.isPlaying) {
@@ -154,11 +159,18 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     });
 
     setIsVisible(true);
+    
+    console.log('Starting playlist playback with first URL:', urls[0]);
 
-    audioUtils.playAudio(urls[0]).catch((error) => {
-      console.error('Failed to play audio:', error);
-      setNowPlaying((prev) => prev ? { ...prev, isPlaying: false } : null);
-    });
+    audioUtils.playAudio(urls[0])
+      .then(() => {
+        console.log('Successfully started playlist playback');
+      })
+      .catch((error) => {
+        console.error('Failed to play playlist audio:', error);
+        console.error('Failed URL was:', urls[0]);
+        setNowPlaying((prev) => prev ? { ...prev, isPlaying: false } : null);
+      });
   };
 
   // 一時停止

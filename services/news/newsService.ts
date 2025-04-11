@@ -83,14 +83,32 @@ export const fetchEpisodeById = async (episodeId: string) => {
  * 記事の英語音声URLを取得する
  */
 export const getEnglishAudioUrl = (article: any) => {
-  return article.english_audio_url || '';
+  const url = article.english_audio_url || '';
+  console.log('English audio URL:', url);
+  // 開発環境では絶対URLに変換して返す
+  if (url && url.startsWith('/mock/') && typeof window !== 'undefined') {
+    const baseUrl = window.location.origin;
+    const absoluteUrl = `${baseUrl}${url}`;
+    console.log('Converted to absolute URL:', absoluteUrl);
+    return absoluteUrl;
+  }
+  return url;
 };
 
 /**
  * 記事の日本語音声URLを取得する
  */
 export const getJapaneseAudioUrl = (article: any) => {
-  return article.japanese_audio_url || '';
+  const url = article.japanese_audio_url || '';
+  console.log('Japanese audio URL:', url);
+  // 開発環境では絶対URLに変換して返す
+  if (url && url.startsWith('/mock/') && typeof window !== 'undefined') {
+    const baseUrl = window.location.origin;
+    const absoluteUrl = `${baseUrl}${url}`;
+    console.log('Converted to absolute URL:', absoluteUrl);
+    return absoluteUrl;
+  }
+  return url;
 };
 
 /**
@@ -101,9 +119,10 @@ export const getEpisodeEnglishAudioUrls = (episode: any) => {
     return [];
   }
   
+  // getEnglishAudioUrl関数を使用してプレイリスト用のURLを取得（絶対URL変換を適用）
   return episode.articles
     .filter(article => article.english_audio_url)
-    .map(article => article.english_audio_url);
+    .map(article => getEnglishAudioUrl(article));
 };
 
 /**
@@ -114,7 +133,8 @@ export const getEpisodeJapaneseAudioUrls = (episode: any) => {
     return [];
   }
   
+  // getJapaneseAudioUrl関数を使用してプレイリスト用のURLを取得（絶対URL変換を適用）
   return episode.articles
     .filter(article => article.japanese_audio_url)
-    .map(article => article.japanese_audio_url);
+    .map(article => getJapaneseAudioUrl(article));
 };

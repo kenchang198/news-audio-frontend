@@ -8,29 +8,124 @@ export const getAudioInstance = (): HTMLAudioElement => {
   return audioInstance;
 };
 
+// BlobURLの保持用キャッシュ
+const blobUrlCache: Record<string, string> = {};
+
 // 音声を再生
 export const playAudio = (url: string): Promise<void> => {
   const audio = getAudioInstance();
+  
+  console.log('Attempting to play audio from URL:', url);
   
   // 現在の再生を停止
   if (audio.src) {
     audio.pause();
     audio.currentTime = 0;
+    
+    // もし現在のURLがblobで始まる場合、それを解放
+    if (audio.src.startsWith('blob:')) {
+      try {
+        URL.revokeObjectURL(audio.src);
+        console.log('Revoked previous Blob URL:', audio.src);
+      } catch (error) {
+        console.error('Error revoking blob URL:', error);
+      }
+    }
+    
+    audio.removeAttribute('src'); // srcを明示的にクリア
   }
   
-  // 新しいURLを設定して再生
-  audio.src = url;
-  
-  return new Promise((resolve, reject) => {
-    audio.oncanplay = () => {
-      audio.play()
-        .then(() => resolve())
-        .catch((error) => reject(error));
-    };
-    
-    audio.onerror = (error) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // 絶対URLを確保（すでに絶対URLであればそのまま）
+      const absoluteUrl = (url.startsWith('http') || url.startsWith('blob:')) 
+        ? url 
+        : window.location.origin + (url.startsWith('/') ? '' : '/') + url;
+      
+      console.log('Using absolute URL:', absoluteUrl);
+      
+      // Blobとして音声を取得
+      console.log('Fetching audio file as blob...');
+      const response = await fetch(absoluteUrl, { cache: 'no-store' });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch audio: ${response.status} ${response.statusText}`);
+      }
+      
+      const blob = await response.blob();
+      console.log('Audio blob fetched successfully, MIME type:', blob.type);
+      
+      // BlobURLを作成
+      const blobUrl = URL.createObjectURL(blob);
+      console.log('Created Blob URL:', blobUrl);
+      
+      // 新しいURLを設定
+      audio.src = blobUrl;
+      
+      // エラーイベントリスナーを追加
+      const handleError = (event: Event) => {
+        console.error('Audio error event occurred:', event);
+        if (audio.error) {
+          console.error('Audio error code:', audio.error.code);
+          console.error('Audio error message:', audio.error.message);
+        }
+      };
+      
+      // 既存のイベントリスナーをクリア
+      audio.oncanplay = null;
+      audio.onloadeddata = null;
+      audio.onerror = null;
+      
+      audio.addEventListener('error', handleError);
+      
+      // 音声の読み込み完了を検知
+      audio.oncanplay = () => {
+        console.log('Audio can play now, attempting to play...');
+        audio.play()
+          .then(() => {
+            console.log('Audio playback started successfully');
+            audio.removeEventListener('error', handleError);
+            resolve();
+          })
+          .catch((error) => {
+            console.error('Audio play() failed:', error);
+            audio.removeEventListener('error', handleError);
+            reject(error);
+          });
+      };
+      
+      // 5秒以内に再生できない場合はタイムアウト
+      const timeout = setTimeout(() => {
+        console.error('Audio loading timeout');
+        audio.removeEventListener('error', handleError);
+        reject(new Error('Audio loading timeout'));
+      }, 5000);
+      
+      // 音声データが正常に読み込まれたことを検知
+      audio.onloadeddata = () => {
+        clearTimeout(timeout);
+        console.log('Audio loaded successfully');
+      };
+      
+      // エラーハンドリング
+      audio.onerror = (event) => {
+        console.error('Audio error event triggered in onerror handler:', event);
+        clearTimeout(timeout);
+        audio.removeEventListener('error', handleError);
+        
+        // エラーオブジェクトがある場合は詳細を表示
+        if (audio.error) {
+          const errorMessage = `Audio error: ${audio.error.message || 'unknown error'} (code: ${audio.error.code})`;
+          console.error(errorMessage);
+          reject(new Error(errorMessage));
+        } else {
+          reject(new Error('Unknown audio error occurred'));
+        }
+      };
+    } catch (error) {
+      console.error('Unexpected error in playAudio:', error);
       reject(error);
-    };
+    }
   });
 };
 
@@ -60,6 +155,25 @@ export const isAudioPlaying = (): boolean => {
 // 再生を停止して音声をクリア
 export const stopAudio = (): void => {
   const audio = getAudioInstance();
+  
+  // 現在のURLがBlobURLの場合は解放
+  if (audio.src && audio.src.startsWith('blob:')) {
+    try {
+      // メモリリークを防ぐためにBlobURLを解放
+      URL.revokeObjectURL(audio.src);
+      console.log('Revoked Blob URL:', audio.src);
+      
+      // blobUrlCacheからこのURLに対応するエントリを削除
+      Object.keys(blobUrlCache).forEach(key => {
+        if (blobUrlCache[key] === audio.src) {
+          delete blobUrlCache[key];
+        }
+      });
+    } catch (error) {
+      console.error('Error revoking Blob URL:', error);
+    }
+  }
+  
   audio.pause();
   audio.currentTime = 0;
   audio.src = '';
