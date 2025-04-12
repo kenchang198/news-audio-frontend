@@ -1,11 +1,11 @@
 import axios from 'axios';
-import { Episode, PaginatedEpisodes, Language } from '@/types';
+import { Episode, EpisodeSummary, Language, Article } from '@/types';
 
 // API基本URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003/api';
 
 // モックモード有効化フラグ (バックエンド接続できない場合に使用)
-const USE_MOCK_DATA = true; // テスト中はtrueに設定、本番環境ではfalseに変更
+const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
 
 // APIクライアントの作成
 const apiClient = axios.create({
@@ -15,97 +15,77 @@ const apiClient = axios.create({
   },
 });
 
-// モックデータ
-const mockEpisodes: Episode[] = [
-  {
-    id: '1',
-    date: '2025-04-10',
-    articles: [
-      {
-        id: '101',
-        title: 'AIの発展について',
-        url: 'https://medium.com/sample/ai-development',
-        source: 'Medium',
-        summary: {
-          ja: 'AIテクノロジーは急速に発展しており、様々な分野で活用されています。機械学習とディープラーニングの進歩により、より高度なAIシステムが開発されています。',
-          en: 'AI technology is rapidly evolving and being utilized in various fields. Advances in machine learning and deep learning are enabling the development of more sophisticated AI systems.'
-        },
-        audio: {
-          ja: 'https://example.com/audio/ja/101',
-          en: 'https://example.com/audio/en/101'
-        }
-      },
-      {
-        id: '102',
-        title: 'ウェブ開発の最新トレンド',
-        url: 'https://medium.com/sample/web-dev-trends',
-        source: 'Medium',
-        summary: {
-          ja: 'モダンなウェブ開発では、ReactやNext.jsなどのフレームワークが人気です。また、TailwindCSSのようなユーティリティファーストのCSSフレームワークも広く採用されています。',
-          en: 'In modern web development, frameworks like React and Next.js are popular. Utility-first CSS frameworks like TailwindCSS are also widely adopted.'
-        },
-        audio: {
-          ja: 'https://example.com/audio/ja/102',
-          en: 'https://example.com/audio/en/102'
-        }
-      }
-    ]
-  },
-  {
-    id: '2',
-    date: '2025-04-09',
-    articles: [
-      {
-        id: '201',
-        title: 'データサイエンスの基礎',
-        url: 'https://medium.com/sample/data-science-basics',
-        source: 'Medium',
-        summary: {
-          ja: 'データサイエンスは、データから有用な洞察を引き出すための科学的方法論です。統計学、機械学習、ドメイン知識を組み合わせて分析を行います。',
-          en: 'Data science is a scientific methodology for extracting useful insights from data. It combines statistics, machine learning, and domain knowledge for analysis.'
-        },
-        audio: {
-          ja: 'https://example.com/audio/ja/201',
-          en: 'https://example.com/audio/en/201'
-        }
-      }
-    ]
-  }
-];
+// モックデータのパス
+const MOCK_PATH = {
+  episodesList: '/mock/episodes_list.json',
+  latestEpisode: '/mock/news-data.json',
+  episodeById: (id: string) => `/mock/episode_${id}.json`
+};
 
+// インターフェース
+interface PaginatedEpisodes {
+  episodes: EpisodeSummary[];
+  totalPages: number;
+  currentPage: number;
+  totalEpisodes: number;
+}
+
+// API関数
 // エピソード一覧を取得
 export const getEpisodes = async (page: number = 1, limit: number = 10): Promise<PaginatedEpisodes> => {
   if (USE_MOCK_DATA) {
-    // モックデータを使用
-    console.log('Using mock data for episodes');
-    const start = (page - 1) * limit;
-    const end = start + limit;
-    const paginatedEpisodes = mockEpisodes.slice(start, end);
-    return {
-      episodes: paginatedEpisodes,
-      totalPages: Math.ceil(mockEpisodes.length / limit),
-      currentPage: page
-    };
+    // モックデータを使用 (JSONファイルから取得)
+    console.log('Using mock data for episodes from JSON file');
+    try {
+      const response = await axios.get(MOCK_PATH.episodesList);
+      const allEpisodes: EpisodeSummary[] = response.data;
+      
+      const start = (page - 1) * limit;
+      const end = start + limit;
+      const paginatedEpisodes = allEpisodes.slice(start, end);
+      
+      return {
+        episodes: paginatedEpisodes,
+        totalPages: Math.ceil(allEpisodes.length / limit),
+        currentPage: page,
+        totalEpisodes: allEpisodes.length
+      };
+    } catch (error) {
+      console.error('Failed to fetch mock episodes:', error);
+      return { episodes: [], totalPages: 0, currentPage: page, totalEpisodes: 0 };
+    }
   }
   
   try {
-    const response = await apiClient.get(`/episodes`, {
+    const response = await apiClient.get('/episodes', {
       params: { page, limit },
     });
     return response.data;
   } catch (error) {
     console.error('Failed to fetch episodes:', error);
-    return { episodes: [], totalPages: 0, currentPage: page };
+    return { episodes: [], totalPages: 0, currentPage: page, totalEpisodes: 0 };
   }
 };
 
 // 特定のエピソードを取得
 export const getEpisode = async (episodeId: string): Promise<Episode | null> => {
   if (USE_MOCK_DATA) {
-    // モックデータを使用
-    console.log(`Using mock data for episode ${episodeId}`);
-    const episode = mockEpisodes.find(ep => ep.id === episodeId);
-    return episode || null;
+    // モックデータを使用 (JSONファイルから取得)
+    console.log(`Using mock data for episode ${episodeId} from JSON file`);
+    try {
+      const response = await axios.get(MOCK_PATH.episodeById(episodeId));
+      return response.data;
+    } catch (error) {
+      // 該当するJSONがない場合は最新のエピソードを返す (newsService.tsと同様の挙動)
+      console.warn(`Episode file for ID ${episodeId} not found, using latest episode`);
+      try {
+        const response = await axios.get(MOCK_PATH.latestEpisode);
+        return response.data;
+      } catch (latestError) {
+        console.error(`Failed to fetch mock episode ${episodeId} or latest episode:`, latestError);
+        return null;
+      }
+    }
   }
   
   try {
@@ -120,15 +100,29 @@ export const getEpisode = async (episodeId: string): Promise<Episode | null> => 
 // 記事の要約を取得
 export const getArticleSummary = async (articleId: string, language: Language): Promise<string | null> => {
   if (USE_MOCK_DATA) {
-    // モックデータを使用
-    console.log(`Using mock data for article summary ${articleId}, language: ${language}`);
-    for (const episode of mockEpisodes) {
-      const article = episode.articles.find(art => art.id === articleId);
-      if (article && article.summary && article.summary[language]) {
-        return article.summary[language] || null;
+    // モックデータを使用 (JSONファイルから取得)
+    console.log(`Using mock data for article summary ${articleId}, language: ${language} from JSON file`);
+    try {
+      // 記事IDからエピソードIDを推測 (newsService.tsにはないロジックだが、ここでは必要)
+      // 例: "GPT_5の進化複雑な推論が可能に_e8f4a2b1" -> news-data.json を参照
+      // 例: "メタバースが教育分野で急成長_2q3r4s5t" -> episode_2025-04-09.json を参照
+      // この推測ロジックは複雑になるため、ここでは最新エピソードから探す簡易的な実装とする
+      // (より正確にするには、全エピソードJSONを読み込むか、記事IDの命名規則に依存する必要がある)
+      const episodeResponse = await axios.get(MOCK_PATH.latestEpisode); // 最新エピソードから探す
+      const episode: Episode = episodeResponse.data;
+      
+      const article = episode.articles.find(a => a.id === articleId);
+      if (!article) {
+         // 見つからない場合は他のエピソードも探す (簡易実装のため省略)
+         console.warn(`Article ${articleId} not found in latest mock episode.`);
+         return null;
       }
+      
+      return language === 'en' ? article.english_summary : article.japanese_summary;
+    } catch (error) {
+      console.error(`Failed to fetch mock article summary for ${articleId}:`, error);
+      return null;
     }
-    return null;
   }
   
   try {
@@ -145,15 +139,33 @@ export const getArticleSummary = async (articleId: string, language: Language): 
 // 記事の音声URLを取得
 export const getArticleAudio = async (articleId: string, language: Language): Promise<string | null> => {
   if (USE_MOCK_DATA) {
-    // モックデータを使用
-    console.log(`Using mock data for article audio ${articleId}, language: ${language}`);
-    for (const episode of mockEpisodes) {
-      const article = episode.articles.find(art => art.id === articleId);
-      if (article && article.audio && article.audio[language]) {
-        return article.audio[language] || null;
+    // モックデータを使用 (JSONファイルから取得)
+    console.log(`Using mock data for article audio ${articleId}, language: ${language} from JSON file`);
+     try {
+      // 記事IDからエピソードIDを推測 (getArticleSummaryと同様の簡易実装)
+      const episodeResponse = await axios.get(MOCK_PATH.latestEpisode); // 最新エピソードから探す
+      const episode: Episode = episodeResponse.data;
+      
+      const article = episode.articles.find(a => a.id === articleId);
+       if (!article) {
+         // 見つからない場合は他のエピソードも探す (簡易実装のため省略)
+         console.warn(`Article ${articleId} not found in latest mock episode.`);
+         return null;
       }
+      
+      const audioUrl = language === 'en' ? article.english_audio_url : article.japanese_audio_url;
+      
+      // newsService.tsと同様に、相対パスを絶対パスに変換する処理を追加
+      if (audioUrl && audioUrl.startsWith('/mock/') && typeof window !== 'undefined') {
+        const baseUrl = window.location.origin;
+        return `${baseUrl}${audioUrl}`;
+      }
+      return audioUrl || null; // URLがない場合はnullを返す
+      
+    } catch (error) {
+      console.error(`Failed to fetch mock article audio for ${articleId}:`, error);
+      return null;
     }
-    return null;
   }
   
   try {

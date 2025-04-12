@@ -1,8 +1,9 @@
 import axios from 'axios';
+import { Article, Episode } from '@/types';
 
 // 環境変数から API の URL を取得
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
-const USE_MOCK_DATA = !API_BASE_URL || process.env.NODE_ENV === 'development';
+const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
 
 // モックデータのパス
 const MOCK_PATH = {
@@ -82,7 +83,7 @@ export const fetchEpisodeById = async (episodeId: string) => {
 /**
  * 記事の英語音声URLを取得する
  */
-export const getEnglishAudioUrl = (article: any) => {
+export const getEnglishAudioUrl = (article: Article) => {
   const url = article.english_audio_url || '';
   console.log('English audio URL:', url);
   // 開発環境では絶対URLに変換して返す
@@ -98,7 +99,7 @@ export const getEnglishAudioUrl = (article: any) => {
 /**
  * 記事の日本語音声URLを取得する
  */
-export const getJapaneseAudioUrl = (article: any) => {
+export const getJapaneseAudioUrl = (article: Article) => {
   const url = article.japanese_audio_url || '';
   console.log('Japanese audio URL:', url);
   // 開発環境では絶対URLに変換して返す
@@ -114,7 +115,7 @@ export const getJapaneseAudioUrl = (article: any) => {
 /**
  * エピソード全体の英語音声URLのリストを取得する
  */
-export const getEpisodeEnglishAudioUrls = (episode: any) => {
+export const getEpisodeEnglishAudioUrls = (episode: Episode) => {
   if (!episode || !episode.articles || !Array.isArray(episode.articles)) {
     return [];
   }
@@ -128,7 +129,7 @@ export const getEpisodeEnglishAudioUrls = (episode: any) => {
 /**
  * エピソード全体の日本語音声URLのリストを取得する
  */
-export const getEpisodeJapaneseAudioUrls = (episode: any) => {
+export const getEpisodeJapaneseAudioUrls = (episode: Episode) => {
   if (!episode || !episode.articles || !Array.isArray(episode.articles)) {
     return [];
   }
