@@ -3,23 +3,30 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import EpisodeList from '@/components/episodes/EpisodeList';
-import { fetchEpisodesList } from '@/services/news/newsService';
+import Pagination from '@/components/ui/Pagination';
+import { getEpisodes } from '@/services/api';
 import { EpisodeSummary } from '@/types';
 
 export default function Home() {
   const [episodes, setEpisodes] = useState<EpisodeSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalEpisodes, setTotalEpisodes] = useState(0);
+  const pageSize = 10; // 1ページあたりの表示件数
 
   // エピソードデータを取得
-  const loadEpisodes = async () => {
+  const loadEpisodes = async (page: number) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const data = await fetchEpisodesList();
-      // データが配列の場合はそのまま使用し、オブジェクトの場合はepisodesプロパティを取り出す
-      setEpisodes(Array.isArray(data) ? data : data.episodes || []);
+      const result = await getEpisodes(page, pageSize);
+      setEpisodes(result.episodes);
+      setTotalPages(result.totalPages);
+      setCurrentPage(result.currentPage);
+      setTotalEpisodes(result.totalEpisodes);
     } catch (err) {
       setError('エピソードの取得に失敗しました。後でもう一度お試しください。');
       console.error('Failed to fetch episodes:', err);
@@ -28,9 +35,18 @@ export default function Home() {
     }
   };
 
+  // ページ変更時の処理
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+    loadEpisodes(page);
+    // ページトップにスクロール
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // 初回レンダリング時にデータを取得
   useEffect(() => {
-    loadEpisodes();
+    loadEpisodes(currentPage);
   }, []);
 
   return (
@@ -40,6 +56,11 @@ export default function Home() {
         <p className="mt-2 text-sm text-gray-500">
           最新のITニュースをAIが要約し、音声で聴けるサービスです
         </p>
+        {totalEpisodes > 0 && (
+          <p className="mt-1 text-sm text-gray-500">
+            全 {totalEpisodes} 件のエピソード
+          </p>
+        )}
       </div>
 
       {isLoading ? (
@@ -62,7 +83,16 @@ export default function Home() {
           </div>
         </div>
       ) : (
-        <EpisodeList episodes={episodes} />
+        <>
+          <EpisodeList episodes={episodes} />
+          {totalPages > 1 && (
+            <Pagination 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              onPageChange={handlePageChange} 
+            />
+          )}
+        </>
       )}
     </Layout>
   );
