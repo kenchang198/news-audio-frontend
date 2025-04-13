@@ -18,7 +18,8 @@ export default function Home() {
     
     try {
       const data = await fetchEpisodesList();
-      setEpisodes(data);
+      // データが配列の場合はそのまま使用し、オブジェクトの場合はepisodesプロパティを取り出す
+      setEpisodes(Array.isArray(data) ? data : data.episodes || []);
     } catch (err) {
       setError('エピソードの取得に失敗しました。後でもう一度お試しください。');
       console.error('Failed to fetch episodes:', err);
