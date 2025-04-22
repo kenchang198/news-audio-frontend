@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { EpisodeSummary, Episode, Language } from '@/types';
 import Link from 'next/link';
-import { fetchEpisodeById, getEpisodeEnglishAudioUrls, getEpisodeJapaneseAudioUrls } from '@/services/news/newsService';
+import { getEpisode } from '@/services/api';
 import { useAudio } from '@/contexts/AudioContext';
 import LanguageToggle from '@/components/ui/LanguageToggle';
 
@@ -47,7 +47,7 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
     setError(null);
 
     try {
-      const episodeData = await fetchEpisodeById(episodeId);
+      const episodeData = await getEpisode(episodeId);
       if (episodeData) {
         // フッターで直接再生
         playEpisode(episodeData);
@@ -64,8 +64,19 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
 
   // エピソードをフッターで再生
   const playEpisode = (episode: Episode) => {
-    const englishAudioUrls = getEpisodeEnglishAudioUrls(episode);
-    const japaneseAudioUrls = getEpisodeJapaneseAudioUrls(episode);
+    // 英語・日本語音声URLリストを直接抽出し、絶対パス化
+    const toAbsoluteUrl = (url: string) => {
+      if (url && url.startsWith('/mock/') && typeof window !== 'undefined') {
+        return window.location.origin + url;
+      }
+      return url;
+    };
+    const englishAudioUrls = (episode.articles || [])
+      .filter(article => article.english_audio_url)
+      .map(article => toAbsoluteUrl(article.english_audio_url));
+    const japaneseAudioUrls = (episode.articles || [])
+      .filter(article => article.japanese_audio_url)
+      .map(article => toAbsoluteUrl(article.japanese_audio_url));
     
     // 選択された言語で再生（対応する言語がなければ他方を使用）
     let selectedLanguage = language;

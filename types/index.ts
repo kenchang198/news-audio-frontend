@@ -1,16 +1,19 @@
 export interface Article {
   id: string;
   title: string;
-  link: string;
+  link?: string;
   summary: string;
-  author: string;
-  published: string;
-  source: string;
-  source_id: string;
-  english_summary: string;
-  japanese_summary: string;
-  english_audio_url: string;
-  japanese_audio_url: string;
+  published?: string;
+  content?: string;
+  audio_url: string;
+  intro_audio_url?: string;
+  duration?: number;
+}
+
+export interface PlaylistItem {
+  type: string; // intro, article_intro, article, outro など
+  article_id?: string;
+  audio_url: string;
 }
 
 export interface Episode {
@@ -18,15 +21,15 @@ export interface Episode {
   title: string;
   created_at: string;
   articles: Article[];
-  source: string;
+  playlist: PlaylistItem[];
+  intro_audio_url?: string;
+  outro_audio_url?: string;
 }
 
 export interface EpisodeSummary {
   episode_id: string;
   title: string;
   created_at: string;
-  article_count: number;
-  source: string;
 }
 
 export type Language = 'en' | 'ja';
