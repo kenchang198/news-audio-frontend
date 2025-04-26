@@ -1,21 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { EpisodeSummary, Episode, Language } from '@/types';
+import { EpisodeSummary, Episode } from '@/types';
 import Link from 'next/link';
 import { getEpisode } from '@/services/api';
 import { useAudio } from '@/contexts/AudioContext';
-import LanguageToggle from '@/components/ui/LanguageToggle';
 
 interface EpisodeListProps {
   episodes: EpisodeSummary[];
 }
 
 const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
-  const { playPlaylist, nowPlaying, pause, resumePlayback, setLanguage } = useAudio();
+  const { playPlaylist, nowPlaying, pause, resumePlayback } = useAudio();
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [playingEpisodes, setPlayingEpisodes] = useState<Record<string, boolean>>({});
-  const [language, setPreferredLanguage] = useState<Language>('ja');
 
   // 現在再生中のエピソードの状態を監視
   useEffect(() => {
@@ -64,47 +62,30 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
 
   // エピソードをフッターで再生
   const playEpisode = (episode: Episode) => {
-    // 英語・日本語音声URLリストを直接抽出し、絶対パス化
     const toAbsoluteUrl = (url: string) => {
-      if (url && url.startsWith('/mock/') && typeof window !== 'undefined') {
-        return window.location.origin + url;
+      if (url && !url.startsWith('http') && typeof window !== 'undefined') {
+        return window.location.origin + (url.startsWith('/') ? '' : '/') + url;
       }
       return url;
     };
-    const englishAudioUrls = (episode.articles || [])
-      .filter(article => article.english_audio_url)
-      .map(article => toAbsoluteUrl(article.english_audio_url));
-    const japaneseAudioUrls = (episode.articles || [])
-      .filter(article => article.japanese_audio_url)
-      .map(article => toAbsoluteUrl(article.japanese_audio_url));
-    
-    // 選択された言語で再生（対応する言語がなければ他方を使用）
-    let selectedLanguage = language;
-    if (selectedLanguage === 'ja' && japaneseAudioUrls.length === 0) {
-      selectedLanguage = 'en';
-    } else if (selectedLanguage === 'en' && englishAudioUrls.length === 0) {
-      selectedLanguage = 'ja';
+
+    const playlistUrls = (episode.playlist || []).map(item => toAbsoluteUrl(item.audio_url));
+
+    if (playlistUrls.length === 0) {
+      console.warn('No audio URLs in playlist');
+      return;
     }
-    
+
+    // 単一言語想定のためjaに詰める
     playPlaylist(
       episode.episode_id,
       episode.title,
       {
-        ja: japaneseAudioUrls,
-        en: englishAudioUrls
+        ja: playlistUrls,
+        en: []
       },
-      selectedLanguage
+      'ja'
     );
-  };
-  
-  // 言語切り替え処理
-  const handleLanguageChange = (newLanguage: Language) => {
-    setPreferredLanguage(newLanguage);
-    
-    // 現在再生中のエピソードがある場合は言語を切り替える
-    if (nowPlaying?.isPlaylist && nowPlaying.isPlaying) {
-      setLanguage(newLanguage);
-    }
   };
 
   if (episodes.length === 0) {
@@ -124,14 +105,6 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
         </div>
       )}
       
-      {/* 言語切り替え */}
-      <div className="mb-6 flex justify-end">
-        <LanguageToggle 
-          language={language} 
-          onChange={handleLanguageChange} 
-        />
-      </div>
-
       {/* エピソード一覧 */}
       <div className="space-y-4">
         {episodes.map((episode) => {
@@ -177,9 +150,11 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
                       
                       <div className="mt-2 flex justify-between items-center">
                         <div className="flex items-center text-sm text-gray-500">
-                          <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-medium">
-                            {episode.source}
-                          </span>
+                          {('source' in episode) && (
+                            <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-medium">
+                              {(episode as any).source}
+                            </span>
+                          )}
                         </div>
                         <p className="text-sm text-gray-400">
                           {episodeDate.toLocaleDateString('ja-JP', {
@@ -190,9 +165,11 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
                         </p>
                       </div>
                       
-                      <p className="mt-2 text-sm text-gray-500">
-                        {episode.article_count}件の記事
-                      </p>
+                      {('article_count' in episode) && (
+                        <p className="mt-2 text-sm text-gray-500">
+                          {(episode as any).article_count}件の記事
+                        </p>
+                      )}
                       
                       {/* 詳細リンクを明示的に表示 */}
                       <div className="mt-3">
