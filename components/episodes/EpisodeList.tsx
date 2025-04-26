@@ -171,18 +171,7 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
                         </p>
                       )}
                       
-                      {/* 詳細リンクを明示的に表示 */}
-                      <div className="mt-3">
-                        <Link 
-                          href={`/episodes/${episode.episode_id}`}
-                          className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-700 border border-blue-300 rounded-md hover:bg-blue-50"
-                        >
-                          <span>詳細を表示</span>
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </Link>
-                      </div>
+                      {/* 詳細リンクはMVPでは非表示 */}
                     </div>
                   </div>
                 </div>
