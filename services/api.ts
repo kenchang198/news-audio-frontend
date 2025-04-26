@@ -2,7 +2,7 @@ import axios from 'axios';
 import { Episode, EpisodeSummary, Language, Article } from '@/types';
 
 // API基本URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_UR || 'http://localhost:5001/api';
 
 // モックモード有効化フラグ (バックエンド接続できない場合に使用)
 const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
@@ -60,7 +60,7 @@ export const getEpisodes = async (page: number = 1, limit: number = 10): Promise
   
   try {
     const response = await apiClient.get<EpisodesResponse>('/episodes');
-    const allEpisodes = response.data.episodes;
+    const allEpisodes = (response.data as any).episodes ?? response.data;
     const start = (page - 1) * limit;
     const end = start + limit;
     const paginatedEpisodes = allEpisodes.slice(start, end);

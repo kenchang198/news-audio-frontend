@@ -1,18 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Article, Language } from '@/types';
-import LanguageToggle from '@/components/ui/LanguageToggle';
+import { Article } from '@/types';
 import { useAudio } from '@/contexts/AudioContext';
 
 interface ArticleItemProps {
   article: Article;
-  defaultLanguage?: Language;
 }
 
-const ArticleItem: React.FC<ArticleItemProps> = ({
-  article,
-  defaultLanguage = 'ja',
-}) => {
-  const [language, setLanguage] = useState<Language>(defaultLanguage);
+const ArticleItem: React.FC<ArticleItemProps> = ({ article }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const { play, nowPlaying, pause, resumePlayback } = useAudio();
   
@@ -25,12 +19,15 @@ const ArticleItem: React.FC<ArticleItemProps> = ({
     }
   }, [nowPlaying, article.id]);
 
-  // 現在の言語の要約テキストと音声URLを取得
-  const summary = language === 'ja' ? article.japanese_summary : article.english_summary;
-  const audioUrls = {
-    ja: article.japanese_audio_url,
-    en: article.english_audio_url
+  const toAbsoluteUrl = (url: string) => {
+    if (url && !url.startsWith('http') && typeof window !== 'undefined') {
+      return window.location.origin + (url.startsWith('/') ? '' : '/') + url;
+    }
+    return url;
   };
+
+  const summary = article.summary;
+  const audioUrl = toAbsoluteUrl(article.audio_url);
 
   // 再生ボタンのクリックハンドラ
   const handlePlayToggle = () => {
@@ -45,15 +42,10 @@ const ArticleItem: React.FC<ArticleItemProps> = ({
       play(
         article.id,
         article.title,
-        audioUrls,
-        language
+        { ja: audioUrl },
+        'ja'
       );
     }
-  };
-
-  // 言語切り替えハンドラ
-  const handleLanguageChange = (newLanguage: Language) => {
-    setLanguage(newLanguage);
   };
 
   return (
@@ -64,43 +56,34 @@ const ArticleItem: React.FC<ArticleItemProps> = ({
         </h3>
       </div>
       
-      <div className="text-sm text-gray-500 mb-4">
-        <a
-          href={article.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-500 hover:underline"
-        >
-          {article.source} - {article.author}
-        </a>
-      </div>
-      
-      <div className="mb-4 flex items-center justify-end">
-        <LanguageToggle language={language} onChange={handleLanguageChange} />
-      </div>
+      {article.link && (
+        <div className="text-sm text-gray-500 mb-4">
+          <a
+            href={article.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:underline"
+          >
+            元記事リンク
+          </a>
+        </div>
+      )}
       
       {summary ? (
         <div className="text-gray-700 mb-4 text-sm">
           <p>{summary}</p>
         </div>
       ) : (
-        <div className="text-gray-500 mb-4 text-sm">
-          {language === 'ja'
-            ? '要約は利用できません'
-            : 'Summary not available'}
-        </div>
+        <div className="text-gray-500 mb-4 text-sm">要約は利用できません</div>
       )}
       
       <div className="mt-4">
         {/* 音声再生ボタン - TOPページと同様のデザイン（サイズ小さめ） */}
-        {(audioUrls.ja || audioUrls.en) ? (
+        {audioUrl ? (
           <button 
             onClick={handlePlayToggle}
             className="p-2 rounded-full bg-blue-500 text-white hover:bg-blue-600 flex items-center justify-center"
-            aria-label={isPlaying 
-              ? (language === 'ja' ? '一時停止' : 'Pause') 
-              : (language === 'ja' ? 'フッターで再生' : 'Play in footer')
-            }
+            aria-label={isPlaying ? '一時停止' : 'フッターで再生'}
           >
             {isPlaying ? (
               <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -113,11 +96,7 @@ const ArticleItem: React.FC<ArticleItemProps> = ({
             )}
           </button>
         ) : (
-          <div className="text-gray-500 text-sm">
-            {language === 'ja'
-              ? '音声は利用できません'
-              : 'Audio not available'}
-          </div>
+          <div className="text-gray-500 text-sm">音声は利用できません</div>
         )}
       </div>
     </div>

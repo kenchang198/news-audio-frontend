@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Layout from '@/components/layout/Layout';
 import EpisodeDetail from '@/components/episodes/EpisodeDetail';
-import { fetchEpisodeById } from '@/services/news/newsService';
+import { getEpisode } from '@/services/api';
 import { Episode } from '@/types';
 
 export default function EpisodeDetailPage() {
@@ -25,7 +25,7 @@ export default function EpisodeDetailPage() {
     setError(null);
     
     try {
-      const data = await fetchEpisodeById(episodeId);
+      const data = await getEpisode(episodeId);
       if (data) {
         setEpisode(data);
       } else {
