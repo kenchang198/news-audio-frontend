@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Episode, EpisodeSummary, Language, Article } from '@/types';
+import { Episode, EpisodeSummary, Language, Article, PlaylistItem, Playlist } from '@/types';
 
 // API基本URL
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_UR || 'http://localhost:5001/api';
@@ -19,7 +19,8 @@ const apiClient = axios.create({
 const MOCK_PATH = {
   episodesList: '/mock/episodes_list.json',
   latestEpisode: '/mock/news-data.json',
-  episodeById: (id: string) => `/mock/episode_${id}.json`
+  episodeById: (id: string) => `/mock/episode_${id}.json`,
+  playlistById: (id: string) => `/mock/playlist_${id}.json`
 };
 
 // ページネーション情報はフロント側で計算
@@ -102,6 +103,31 @@ export const getEpisode = async (episodeId: string): Promise<Episode | null> => 
     return response.data;
   } catch (error) {
     console.error(`Failed to fetch episode ${episodeId}:`, error);
+    return null;
+  }
+};
+
+// エピソードのプレイリストを取得
+export const getEpisodePlaylist = async (episodeId: string): Promise<Playlist | null> => {
+  if (USE_MOCK_DATA) {
+    console.log(`Using mock data for playlist ${episodeId} from JSON file`);
+    try {
+      // モックJSONファイルからプレイリストを取得
+      const response = await axios.get<Playlist>(MOCK_PATH.playlistById(episodeId));
+      return response.data;
+    } catch (error) {
+      // モックファイルがない場合は空のプレイリストを返すか、nullを返す
+      console.warn(`Mock playlist file for ID ${episodeId} not found.`);
+      return null;
+    }
+  }
+
+  try {
+    // APIからプレイリストを取得
+    const response = await apiClient.get<Playlist>(`/episodes/${episodeId}/playlist`);
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to fetch playlist for episode ${episodeId}:`, error);
     return null;
   }
 };

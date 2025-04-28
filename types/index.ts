@@ -14,6 +14,11 @@ export interface PlaylistItem {
   type: string; // intro, article_intro, article, outro など
   article_id?: string;
   audio_url: string;
+  language?: string; // 言語情報（仕様書にはないが必要と思われる）
+}
+
+export interface Playlist {
+  playlist: PlaylistItem[];
 }
 
 export interface Episode {
@@ -34,11 +39,17 @@ export interface EpisodeSummary {
 
 export type Language = 'en' | 'ja';
 
-export interface AudioPlayerState {
-  isPlaying: boolean;
-  currentArticleId: string | null;
+export interface AudioState {
+  episodeId: string | null;
+  episodeTitle: string | null;
+  playlist: {
+    ja: string[];
+    en: string[];
+  } | null;
+  currentTrackIndex: number;
   currentLanguage: Language;
-  volume: number;
-  progress: number;
+  isPlaying: boolean;
+  currentTime: number;
   duration: number;
+  isPlaylist: boolean; // プレイリスト再生中かどうかのフラグ
 }
