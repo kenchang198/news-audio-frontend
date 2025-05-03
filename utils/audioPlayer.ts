@@ -68,6 +68,13 @@ export const playAudio = (url: string): Promise<void> => {
       // 新しいURLを設定
       audio.src = blobUrl;
       
+      // 先頭から確実に再生するために位置をリセット
+      try {
+        audio.currentTime = 0;
+      } catch (e) {
+        // Safari などで currentTime に即座にアクセスできない場合があるため無視
+      }
+      
       // URLをキャッシュ
       cachedAudioSrc = url;
       
@@ -87,9 +94,12 @@ export const playAudio = (url: string): Promise<void> => {
       
       audio.addEventListener('error', handleError);
       
-      // 音声の読み込み完了を検知
-      audio.oncanplay = () => {
-        console.log('Audio can play now, attempting to play...');
+      // 音声メタデータの読み込み完了を検知（duration など取得可能）
+      audio.onloadedmetadata = () => {
+        console.log('Metadata loaded, resetting to start and playing');
+        try {
+          audio.currentTime = 0;
+        } catch {}
         audio.play()
           .then(() => {
             console.log('Audio playback started successfully');
