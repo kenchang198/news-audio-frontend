@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { EpisodeSummary, PlaylistItem, Playlist } from '@/types';
-import { getEpisodePlaylist } from '@/services/api';
+import { EpisodeSummary } from '@/types';
+import { getEpisode } from '@/services/api';
 import { useAudio } from '@/contexts/AudioContext';
 
 interface EpisodeListProps {
@@ -15,7 +15,7 @@ interface LoadingEpisodeInfo {
 }
 
 const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
-  const { playPlaylist, nowPlaying, pause, resumePlayback } = useAudio();
+  const { play, nowPlaying, pause, resumePlayback } = useAudio();
   // selectedEpisode はローディング表示のために使う。型を緩和する
   const [selectedEpisode, setSelectedEpisode] = useState<LoadingEpisodeInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,8 +26,10 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
   useEffect(() => {
     const newPlayingState: Record<string, boolean> = {};
     
-    if (nowPlaying?.episodeId && nowPlaying.isPlaylist) {
+    if (nowPlaying?.isPlaylist && nowPlaying.episodeId) {
       newPlayingState[nowPlaying.episodeId] = nowPlaying.isPlaying;
+    } else if (!nowPlaying?.isPlaylist && nowPlaying?.articleId) {
+      newPlayingState[nowPlaying.articleId] = nowPlaying.isPlaying;
     }
     
     setPlayingEpisodes(newPlayingState);
@@ -40,7 +42,7 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
       return;
     }
     
-    if (nowPlaying?.episodeId === episodeId && !nowPlaying.isPlaying) {
+    if (!nowPlaying?.isPlaylist && nowPlaying?.articleId === episodeId && !nowPlaying.isPlaying) {
       resumePlayback();
       return;
     }
@@ -50,10 +52,9 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
     setError(null);
 
     try {
-      const playlistData = await getEpisodePlaylist(episodeId);
+      const episodeData = await getEpisode(episodeId);
 
-      // playlistData が null でなく、playlist プロパティを持ち、その配列が空でないかチェック
-      if (playlistData && playlistData.playlist && playlistData.playlist.length > 0) {
+      if (episodeData && episodeData.audio_url) {
         const toAbsoluteUrl = (url: string) => {
           if (url && !url.startsWith('http') && typeof window !== 'undefined') {
             return window.location.origin + (url.startsWith('/') ? '' : '/') + url;
@@ -61,42 +62,23 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
           return url;
         };
 
-        // 音声ファイルのURLを抽出
-        // API仕様に従い、すべてのプレイリストアイテムのaudio_urlを使用
-        // language プロパティが明示的にない場合、デフォルトで 'ja' と想定
-        const jaPlaylistUrls = playlistData.playlist
-          .filter((item: PlaylistItem) => !item.language || item.language === 'ja')
-          .map((item: PlaylistItem) => toAbsoluteUrl(item.audio_url));
-          
-        // 英語の音声URLがあれば抽出（APIの仕様に従って）
-        const enPlaylistUrls = playlistData.playlist
-          .filter((item: PlaylistItem) => item.language === 'en')
-          .map((item: PlaylistItem) => toAbsoluteUrl(item.audio_url));
+        const audioUrl = toAbsoluteUrl(episodeData.audio_url);
 
-        if (jaPlaylistUrls.length === 0) {
-          console.warn(`No suitable audio URLs found in playlist for episode ${episodeId}`);
-          setError('再生可能な音声が見つかりませんでした');
-        } else {
-          // playPlaylist を呼び出して再生開始
-          playPlaylist(
-            episodeId,
-            episodeTitle,
-            {
-              ja: jaPlaylistUrls,
-              en: enPlaylistUrls // 英語の音声URLがある場合は設定
-            },
-            'ja' // デフォルト言語
-          );
-        }
-      } else if (playlistData) {
-        setError('プレイリストが空です');
-        console.warn(`Playlist is empty for episode ${episodeId}`);
+        play(
+          episodeId,
+          episodeTitle,
+          { ja: audioUrl },
+          'ja'
+        );
+      } else if (episodeData) {
+        setError('音声ファイルが見つかりません');
+        console.warn(`No audio_url found for episode ${episodeId}`);
       } else {
-        setError('プレイリストの取得に失敗しました');
+        setError('エピソードの取得に失敗しました');
       }
     } catch (err) {
-      setError('プレイリスト取得・再生中にエラーが発生しました');
-      console.error('Failed to fetch or play playlist:', err);
+      setError('エピソードの取得に失敗しました');
+      console.error('Failed to fetch episode:', err);
     } finally {
       setIsLoading(false);
       setSelectedEpisode(null);

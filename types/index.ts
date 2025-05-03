@@ -25,6 +25,7 @@ export interface Episode {
   episode_id: string;
   title: string;
   created_at: string;
+  audio_url: string;
   articles: Article[];
   playlist: PlaylistItem[];
   intro_audio_url?: string;
