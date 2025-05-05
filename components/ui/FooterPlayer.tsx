@@ -75,16 +75,16 @@ const FooterPlayer: React.FC = () => {
   const isPlaylist = nowPlaying.isPlaylist;
   const currentTrackIndex = nowPlaying.currentTrackIndex || 0;
   const totalTracks = isPlaylist && nowPlaying.playlistUrls 
-    ? (nowPlaying.language === 'ja' ? nowPlaying.playlistUrls.ja.length : nowPlaying.playlistUrls.en.length) 
+    ? nowPlaying.playlistUrls.ja.length 
     : 0;
   
-  // 現在の言語に対応する音声URLの存在確認
+  // 日本語の音声URLの存在確認
   let currentAudioUrl: string | undefined;
   if (isPlaylist && nowPlaying.playlistUrls) {
-    const urls = nowPlaying.language === 'ja' ? nowPlaying.playlistUrls.ja : nowPlaying.playlistUrls.en;
+    const urls = nowPlaying.playlistUrls.ja;
     currentAudioUrl = urls[currentTrackIndex];
   } else if (nowPlaying.audioUrls) {
-    currentAudioUrl = nowPlaying.language === 'ja' ? nowPlaying.audioUrls.ja : nowPlaying.audioUrls.en;
+    currentAudioUrl = nowPlaying.audioUrls.ja;
   }
 
   return (
