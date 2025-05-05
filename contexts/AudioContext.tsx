@@ -26,13 +26,12 @@ interface NowPlaying {
 
 interface AudioContextType {
   nowPlaying: NowPlaying | null;
-  play: (articleId: string, title: string, audioUrls: { ja?: string; en?: string }, language: Language) => void;
-  playPlaylist: (episodeId: string, title: string, playlistUrls: { ja: string[], en: string[] }, language: Language) => void;
+  play: (articleId: string, title: string, audioUrls: { ja?: string; en?: string }) => void;
+  playPlaylist: (episodeId: string, title: string, playlistUrls: { ja: string[], en: string[] }) => void;
   pause: () => void;
   stop: () => void;
   nextTrack: () => void;
   prevTrack: () => void;
-  setLanguage: (language: Language) => void;
   isVisible: boolean;
   showPlayer: () => void;
   hidePlayer: () => void;
@@ -47,7 +46,6 @@ const defaultAudioContext: AudioContextType = {
   stop: () => {},
   nextTrack: () => {},
   prevTrack: () => {},
-  setLanguage: () => {},
   isVisible: false,
   showPlayer: () => {},
   hidePlayer: () => {},
@@ -73,7 +71,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
       if (nowPlaying.isPlaylist && nowPlaying.playlistUrls) {
         // プレイリストの場合、次のトラックを再生
         const currentIndex = nowPlaying.currentTrackIndex || 0;
-        const urls = nowPlaying.language === 'ja' ? nowPlaying.playlistUrls.ja : nowPlaying.playlistUrls.en;
+        const urls = nowPlaying.playlistUrls.ja; // 日本語に固定
         
         if (currentIndex < urls.length - 1) {
           // 次のトラックがある場合
@@ -122,9 +120,9 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     };
   }, []); // 空の依存配列でアンマウント時のみ実行
 
-  // 単一の音声を再生
-  const play = (articleId: string, title: string, audioUrls: { ja?: string; en?: string }, language: Language) => {
-    const currentUrl = language === 'ja' ? audioUrls.ja : audioUrls.en;
+  // 単一の音声を再生（日本語に固定）
+  const play = (articleId: string, title: string, audioUrls: { ja?: string; en?: string }) => {
+    const currentUrl = audioUrls.ja; // 日本語に固定
     
     if (!currentUrl) return;
 
@@ -137,7 +135,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
       articleId,
       title,
       audioUrls,
-      language,
+      language: 'ja', // 日本語に固定
       isPlaying: true,
       isPlaylist: false,
     });
@@ -150,9 +148,9 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     });
   };
 
-  // プレイリスト（エピソード全体）を再生
-  const playPlaylist = (episodeId: string, title: string, playlistUrls: { ja: string[], en: string[] }, language: Language) => {
-    const urls = language === 'ja' ? playlistUrls.ja : playlistUrls.en;
+  // プレイリスト（エピソード全体）を再生（日本語に固定）
+  const playPlaylist = (episodeId: string, title: string, playlistUrls: { ja: string[], en: string[] }) => {
+    const urls = playlistUrls.ja; // 日本語に固定
     
     console.log('Playing playlist with urls:', urls);
     
@@ -170,7 +168,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
       episodeId,
       title,
       playlistUrls,
-      language,
+      language: 'ja', // 日本語に固定
       isPlaying: true,
       currentTrackIndex: 0,
       isPlaylist: true,
@@ -220,13 +218,11 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     setIsVisible(false);
   };
 
-  // 次のトラックへ
+  // 次のトラックへ（日本語に固定）
   const nextTrack = () => {
     if (!nowPlaying || !nowPlaying.isPlaylist || nowPlaying.currentTrackIndex === undefined) return;
 
-    const urls = nowPlaying.language === 'ja' 
-      ? nowPlaying.playlistUrls?.ja 
-      : nowPlaying.playlistUrls?.en;
+    const urls = nowPlaying.playlistUrls?.ja; // 日本語に固定
     
     if (!urls || nowPlaying.currentTrackIndex >= urls.length - 1) return;
 
@@ -249,15 +245,13 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     });
   };
 
-  // 前のトラックへ
+  // 前のトラックへ（日本語に固定）
   const prevTrack = () => {
     if (!nowPlaying || !nowPlaying.isPlaylist || nowPlaying.currentTrackIndex === undefined) return;
 
     if (nowPlaying.currentTrackIndex <= 0) return;
 
-    const urls = nowPlaying.language === 'ja' 
-      ? nowPlaying.playlistUrls?.ja 
-      : nowPlaying.playlistUrls?.en;
+    const urls = nowPlaying.playlistUrls?.ja; // 日本語に固定
     
     if (!urls) return;
 
@@ -280,54 +274,6 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
     });
   };
 
-  // 言語切り替え
-  const setLanguage = (language: Language) => {
-    if (!nowPlaying) return;
-
-    let currentUrl: string | undefined;
-
-    if (nowPlaying.isPlaylist && nowPlaying.playlistUrls) {
-      // プレイリストの場合
-      const urls = language === 'ja' ? nowPlaying.playlistUrls.ja : nowPlaying.playlistUrls.en;
-      const index = nowPlaying.currentTrackIndex || 0;
-      
-      if (urls.length <= index) {
-        // 対応する言語のプレイリストがない場合
-        setNowPlaying({ ...nowPlaying, language, isPlaying: false });
-        audioUtils.stopAudio();
-        return;
-      }
-      
-      currentUrl = urls[index];
-    } else if (nowPlaying.audioUrls) {
-      // 単一音声の場合
-      currentUrl = language === 'ja' ? nowPlaying.audioUrls.ja : nowPlaying.audioUrls.en;
-    }
-    
-    if (!currentUrl) {
-      // 対応する言語の音声がない場合
-      setNowPlaying({ ...nowPlaying, language, isPlaying: false });
-      audioUtils.stopAudio();
-      return;
-    }
-
-    const wasPlaying = nowPlaying.isPlaying;
-    
-    // 現在再生中なら一旦停止
-    if (wasPlaying) {
-      audioUtils.pauseAudio();
-    }
-
-    setNowPlaying({ ...nowPlaying, language, isPlaying: wasPlaying });
-
-    // 再生中だった場合は新しい言語で再生開始
-    if (wasPlaying) {
-      audioUtils.playAudio(currentUrl).catch((error) => {
-        console.error('Failed to play audio after language change:', error);
-        setNowPlaying((prev) => prev ? { ...prev, isPlaying: false } : null);
-      });
-    }
-  };
 
   // フッタープレーヤーの表示
   const showPlayer = () => {
@@ -349,7 +295,6 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
         stop,
         nextTrack,
         prevTrack,
-        setLanguage,
         isVisible,
         showPlayer,
         hidePlayer,

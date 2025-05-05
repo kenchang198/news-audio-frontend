@@ -1,23 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Language } from '@/types';
-import LanguageToggle from './LanguageToggle';
 
 interface EpisodePlayerProps {
   englishAudioUrls: string[];
   japaneseAudioUrls: string[];
-  defaultLanguage?: Language;
   title?: string;
-  showLanguageToggle?: boolean;
 }
 
 const EpisodePlayer: React.FC<EpisodePlayerProps> = ({
   englishAudioUrls,
   japaneseAudioUrls,
-  defaultLanguage = 'ja',
   title,
-  showLanguageToggle = true,
 }) => {
-  const [language, setLanguage] = useState<Language>(defaultLanguage);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -25,8 +19,7 @@ const EpisodePlayer: React.FC<EpisodePlayerProps> = ({
   
   const audioRef = useRef<HTMLAudioElement>(null);
   
-  // 現在の言語の音声URLリスト
-  const audioUrls = language === 'ja' ? japaneseAudioUrls : englishAudioUrls;
+  const audioUrls = japaneseAudioUrls;
   
   // 音声が存在するかどうか
   const hasAudio = audioUrls.length > 0;
@@ -67,45 +60,6 @@ const EpisodePlayer: React.FC<EpisodePlayerProps> = ({
     }
   };
   
-  // 言語切り替え時の処理
-  const handleLanguageChange = (newLanguage: Language) => {
-    const currentTime = audioRef.current?.currentTime || 0;
-    const wasPlaying = isPlaying;
-    
-    setLanguage(newLanguage);
-    
-    // 音声が切り替わった後、同じ位置から再生を続ける
-    // （ただし、言語によって記事数が異なる場合は最初から）
-    if (language === 'ja' && newLanguage === 'en') {
-      if (currentTrackIndex < englishAudioUrls.length) {
-        // インデックスが有効なら同じインデックスを使用
-        setCurrentTrackIndex(currentTrackIndex);
-      } else {
-        // インデックスが無効なら最初から
-        setCurrentTrackIndex(0);
-      }
-    } else if (language === 'en' && newLanguage === 'ja') {
-      if (currentTrackIndex < japaneseAudioUrls.length) {
-        // インデックスが有効なら同じインデックスを使用
-        setCurrentTrackIndex(currentTrackIndex);
-      } else {
-        // インデックスが無効なら最初から
-        setCurrentTrackIndex(0);
-      }
-    }
-    
-    // audio要素の更新後に実行するために少し遅延させる
-    setTimeout(() => {
-      if (audioRef.current) {
-        audioRef.current.currentTime = currentTime;
-        if (wasPlaying) {
-          audioRef.current.play().catch(() => {
-            // 自動再生が許可されていない場合などのエラーを無視
-          });
-        }
-      }
-    }, 100);
-  };
   
   // シークバーの操作
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -261,15 +215,7 @@ const EpisodePlayer: React.FC<EpisodePlayerProps> = ({
             {currentTrackIndex + 1}/{totalTracks}
           </div>
           
-          {/* 言語切り替え */}
-          {showLanguageToggle && (
-            <div className="ml-1">
-              <LanguageToggle 
-                language={language} 
-                onChange={handleLanguageChange}
-              />
-            </div>
-          )}
+          {/* 言語切り替えを削除 */}
         </div>
       ) : (
         <div className="bg-gray-100 rounded-full p-2 text-center text-sm text-gray-500">
