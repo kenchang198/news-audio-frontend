@@ -42,8 +42,7 @@ const ArticleItem: React.FC<ArticleItemProps> = ({ article }) => {
       play(
         article.id,
         article.title,
-        { ja: audioUrl },
-        'ja'
+        { ja: audioUrl }
       );
     }
   };

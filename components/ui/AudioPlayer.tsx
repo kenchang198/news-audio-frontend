@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Language } from '@/types';
 import * as audioUtils from '@/utils/audioPlayer';
-import LanguageToggle from './LanguageToggle';
 import { useAudio } from '@/contexts/AudioContext'; // Import useAudio
 
 interface AudioPlayerProps {
@@ -10,15 +9,11 @@ interface AudioPlayerProps {
     ja?: string;
     en?: string;
   };
-  language: Language;
-  onLanguageChange: (language: Language) => void;
 }
 
 const AudioPlayer: React.FC<AudioPlayerProps> = ({
   articleId,
   audioUrls,
-  language,
-  onLanguageChange,
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -30,8 +25,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const progressRef = useRef<HTMLDivElement>(null);
   const context = useAudio(); // Get audio context
 
-  // 現在の言語に対応する音声URLを取得
-  const currentAudioUrl = audioUrls[language];
+  const currentAudioUrl = audioUrls.ja;
 
   // Sync local isPlaying state with global context if this article is the one playing
   useEffect(() => {
@@ -94,7 +88,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       try {
         // Assuming title prop is not available, using a placeholder.
         // Ideally, the component initiating play should provide the title.
-        context.play(articleId, `Article ${articleId}`, audioUrls, language);
+        context.play(articleId, `Article ${articleId}`, audioUrls);
         // Local state will be updated by useEffect
       } catch (error) {
          console.error('Failed to play audio via context:', error);
@@ -103,21 +97,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
          setIsLoading(false);
       }
     }
-  }, [currentAudioUrl, context, articleId, audioUrls, language]);
+  }, [currentAudioUrl, context, articleId, audioUrls]);
 
-  // 言語が変更されたときにContext経由で言語を更新
-  useEffect(() => {
-    // If this player is the current global player and language changes, update context
-    if (context.nowPlaying?.articleId === articleId && context.nowPlaying.language !== language) {
-       context.setLanguage(language);
-    }
-    // No direct stop needed here, context handles it.
-  }, [language, context, articleId]);
-
-  // 言語切り替え処理
-  const handleLanguageChange = (newLanguage: Language) => {
-    onLanguageChange(newLanguage);
-  };
 
   // ミュート切り替え
   const toggleMute = () => {
@@ -147,7 +128,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     <div className="flex flex-col space-y-2">
       {!currentAudioUrl && (
         <p className="text-sm text-gray-500">
-          {language === 'ja' ? '日本語の音声は利用できません' : 'English audio is not available'}
+          日本語の音声は利用できません
         </p>
       )}
       
@@ -226,14 +207,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
                 <div className="py-1">
                   <div className="px-4 py-2 text-sm text-gray-700">
-                    <p className="font-medium mb-1">言語選択</p>
-                    <LanguageToggle
-                      language={language}
-                      onChange={(newLang) => {
-                        handleLanguageChange(newLang);
-                        setIsMenuOpen(false);
-                      }}
-                    />
+                    <p className="font-medium mb-1">メニュー</p>
+                    {/* 言語切り替えを削除 */}
                   </div>
                 </div>
               </div>

@@ -1,10 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useAudio } from '@/contexts/AudioContext';
 import * as audioUtils from '@/utils/audioPlayer';
-import LanguageToggle from './LanguageToggle';
 
 const FooterPlayer: React.FC = () => {
-  const { nowPlaying, pause, stop, nextTrack, prevTrack, setLanguage, isVisible, resumePlayback } = useAudio();
+  const { nowPlaying, pause, stop, nextTrack, prevTrack, isVisible, resumePlayback } = useAudio();
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const progressRef = useRef<HTMLDivElement>(null);
@@ -51,10 +50,6 @@ const FooterPlayer: React.FC = () => {
     }
   };
 
-  // 言語切り替え処理
-  const handleLanguageChange = (newLanguage: 'ja' | 'en') => {
-    setLanguage(newLanguage);
-  };
 
   // プログレスバーのクリック処理
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -80,16 +75,16 @@ const FooterPlayer: React.FC = () => {
   const isPlaylist = nowPlaying.isPlaylist;
   const currentTrackIndex = nowPlaying.currentTrackIndex || 0;
   const totalTracks = isPlaylist && nowPlaying.playlistUrls 
-    ? (nowPlaying.language === 'ja' ? nowPlaying.playlistUrls.ja.length : nowPlaying.playlistUrls.en.length) 
+    ? nowPlaying.playlistUrls.ja.length 
     : 0;
   
-  // 現在の言語に対応する音声URLの存在確認
+  // 日本語の音声URLの存在確認
   let currentAudioUrl: string | undefined;
   if (isPlaylist && nowPlaying.playlistUrls) {
-    const urls = nowPlaying.language === 'ja' ? nowPlaying.playlistUrls.ja : nowPlaying.playlistUrls.en;
+    const urls = nowPlaying.playlistUrls.ja;
     currentAudioUrl = urls[currentTrackIndex];
   } else if (nowPlaying.audioUrls) {
-    currentAudioUrl = nowPlaying.language === 'ja' ? nowPlaying.audioUrls.ja : nowPlaying.audioUrls.en;
+    currentAudioUrl = nowPlaying.audioUrls.ja;
   }
 
   return (
@@ -172,11 +167,7 @@ const FooterPlayer: React.FC = () => {
                 ></div>
               </div>
               
-              {/* 言語切り替え */}
-              <LanguageToggle
-                language={nowPlaying.language}
-                onChange={handleLanguageChange}
-              />
+              {/* 言語切り替えを削除 */}
               
               {/* 閉じるボタン */}
               <button
