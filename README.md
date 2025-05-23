@@ -95,9 +95,12 @@ npm install
 
 ```
 NEXT_PUBLIC_API_URL=http://localhost:3001/api
+NEXT_PUBLIC_S3_BUCKET_URL=https://your-bucket-name.s3.amazonaws.com
+NEXT_PUBLIC_USE_S3_DATA=true
 ```
 
-必要に応じてAPIのURLを変更してください。
+必要に応じてAPIのURLやS3バケットのURLを変更してください。
+`NEXT_PUBLIC_USE_S3_DATA`を`true`に設定すると、APIの代わりにS3バケットからデータを取得します。
 
 ### 開発サーバーの起動
 

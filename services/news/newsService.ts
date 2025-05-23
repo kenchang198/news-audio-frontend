@@ -4,12 +4,20 @@ import { Article, Episode } from '@/types';
 // 環境変数から API の URL を取得
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
+const S3_BUCKET_URL = process.env.NEXT_PUBLIC_S3_BUCKET_URL || '';
+const USE_S3_DATA = process.env.NEXT_PUBLIC_USE_S3_DATA === 'true';
 
 // モックデータのパス
 const MOCK_PATH = {
   episodesList: '/mock/episodes_list.json',
   latestEpisode: '/mock/news-data.json',
   episodeById: (id: string) => `/mock/episode_${id}.json`
+};
+
+const S3_PATH = {
+  episodesList: '/data/episodes_list.json',
+  latestEpisode: '/data/news-data.json',
+  episodeById: (id: string) => `/data/episode_${id}.json`
 };
 
 /**
@@ -20,6 +28,9 @@ export const fetchEpisodesList = async () => {
     if (USE_MOCK_DATA) {
       // モックデータを使用
       const response = await axios.get(MOCK_PATH.episodesList);
+      return response.data;
+    } else if (USE_S3_DATA) {
+      const response = await axios.get(`${S3_BUCKET_URL}${S3_PATH.episodesList}`);
       return response.data;
     } else {
       // 本番APIを使用
@@ -40,6 +51,9 @@ export const fetchLatestEpisode = async () => {
     if (USE_MOCK_DATA) {
       // モックデータを使用
       const response = await axios.get(MOCK_PATH.latestEpisode);
+      return response.data;
+    } else if (USE_S3_DATA) {
+      const response = await axios.get(`${S3_BUCKET_URL}${S3_PATH.latestEpisode}`);
       return response.data;
     } else {
       // 本番APIを使用
@@ -69,6 +83,17 @@ export const fetchEpisodeById = async (episodeId: string) => {
         const response = await axios.get(MOCK_PATH.latestEpisode);
         return response.data;
       }
+    } else if (USE_S3_DATA) {
+      try {
+        // エピソードIDに対応するJSONファイルがあれば取得
+        const response = await axios.get(`${S3_BUCKET_URL}${S3_PATH.episodeById(episodeId)}`);
+        return response.data;
+      } catch (e) {
+        // 該当するJSONがない場合は最新のエピソードを返す
+        console.warn(`Episode file for ID ${episodeId} not found in S3, using latest episode`);
+        const response = await axios.get(`${S3_BUCKET_URL}${S3_PATH.latestEpisode}`);
+        return response.data;
+      }
     } else {
       // 本番APIを使用
       const response = await axios.get(`${API_BASE_URL}/episodes/${episodeId}`);
@@ -93,6 +118,11 @@ export const getEnglishAudioUrl = (article: Article) => {
     console.log('Converted to absolute URL:', absoluteUrl);
     return absoluteUrl;
   }
+  if (url && url.startsWith('/data/') && USE_S3_DATA && S3_BUCKET_URL) {
+    const absoluteUrl = `${S3_BUCKET_URL}${url}`;
+    console.log('Converted to S3 URL:', absoluteUrl);
+    return absoluteUrl;
+  }
   return url;
 };
 
@@ -107,6 +137,11 @@ export const getJapaneseAudioUrl = (article: Article) => {
     const baseUrl = window.location.origin;
     const absoluteUrl = `${baseUrl}${url}`;
     console.log('Converted to absolute URL:', absoluteUrl);
+    return absoluteUrl;
+  }
+  if (url && url.startsWith('/data/') && USE_S3_DATA && S3_BUCKET_URL) {
+    const absoluteUrl = `${S3_BUCKET_URL}${url}`;
+    console.log('Converted to S3 URL:', absoluteUrl);
     return absoluteUrl;
   }
   return url;

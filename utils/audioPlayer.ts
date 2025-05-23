@@ -46,7 +46,9 @@ export const playAudio = (url: string): Promise<void> => {
       // 絶対URLを確保（すでに絶対URLであればそのまま）
       const absoluteUrl = (url.startsWith('http') || url.startsWith('blob:')) 
         ? url 
-        : window.location.origin + (url.startsWith('/') ? '' : '/') + url;
+        : url.startsWith('/data/') && process.env.NEXT_PUBLIC_S3_BUCKET_URL && process.env.NEXT_PUBLIC_USE_S3_DATA === 'true'
+          ? `${process.env.NEXT_PUBLIC_S3_BUCKET_URL}${url}` 
+          : window.location.origin + (url.startsWith('/') ? '' : '/') + url;
       
       console.log('Using absolute URL:', absoluteUrl);
       
