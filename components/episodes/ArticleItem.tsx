@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Article } from '@/types';
+import { getEpisodeAudioUrl } from '@/services/news/newsService';
 import { useAudio } from '@/contexts/AudioContext';
 
 interface ArticleItemProps {
   article: Article;
+  episodeId?: string; // エピソードIDを追加
 }
 
-const ArticleItem: React.FC<ArticleItemProps> = ({ article }) => {
+const ArticleItem: React.FC<ArticleItemProps> = ({ article, episodeId }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const { play, nowPlaying, pause, resumePlayback } = useAudio();
   
@@ -27,7 +29,11 @@ const ArticleItem: React.FC<ArticleItemProps> = ({ article }) => {
   };
 
   const summary = article.summary;
-  const audioUrl = toAbsoluteUrl(article.audio_url);
+  
+  // S3バケット直参照方式で音声URLを取得
+  const audioUrl = episodeId 
+    ? getEpisodeAudioUrl(episodeId)
+    : toAbsoluteUrl(article.audio_url);
 
   // 再生ボタンのクリックハンドラ
   const handlePlayToggle = () => {

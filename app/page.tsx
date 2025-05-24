@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import EpisodeList from '@/components/episodes/EpisodeList';
 import Pagination from '@/components/ui/Pagination';
-import { getEpisodes } from '@/services/api';
+import { fetchEpisodesList } from '@/services/news/newsService';
 import { EpisodeSummary } from '@/types';
 
 export default function Home() {
@@ -22,13 +22,34 @@ export default function Home() {
     setError(null);
     
     try {
-      const result = await getEpisodes(page, pageSize);
-      setEpisodes(result.episodes);
-      setTotalPages(result.totalPages);
-      setCurrentPage(result.currentPage);
-      setTotalEpisodes(result.totalEpisodes);
+      console.log('Loading episodes from S3 bucket...');
+      const allEpisodes = await fetchEpisodesList();
+      
+      console.log('Fetched episodes data:', allEpisodes);
+      
+      if (!allEpisodes) {
+        throw new Error('No episodes data received');
+      }
+      
+      if (!Array.isArray(allEpisodes)) {
+        console.error('Episodes data is not an array:', typeof allEpisodes, allEpisodes);
+        throw new Error('Invalid episodes data format - expected array');
+      }
+      
+      // ページネーション処理
+      const start = (page - 1) * pageSize;
+      const end = start + pageSize;
+      const paginatedEpisodes = allEpisodes.slice(start, end);
+      
+      setEpisodes(paginatedEpisodes);
+      setTotalPages(Math.ceil(allEpisodes.length / pageSize));
+      setCurrentPage(page);
+      setTotalEpisodes(allEpisodes.length);
+      
+      console.log(`Loaded ${paginatedEpisodes.length} episodes for page ${page} (total: ${allEpisodes.length})`);
     } catch (err) {
-      setError('エピソードの取得に失敗しました。後でもう一度お試しください。');
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(`エピソードの取得に失敗しました: ${errorMessage}`);
       console.error('Failed to fetch episodes:', err);
     } finally {
       setIsLoading(false);

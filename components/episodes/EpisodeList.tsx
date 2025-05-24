@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { EpisodeSummary } from '@/types';
 import { getEpisode } from '@/services/api';
+import { getEpisodeAudioUrl } from '@/services/news/newsService';
 import { useAudio } from '@/contexts/AudioContext';
 
 interface EpisodeListProps {
@@ -52,33 +53,20 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
     setError(null);
 
     try {
-      const episodeData = await getEpisode(episodeId);
+      // S3バケット直参照方式で音声URLを取得
+      const audioUrl = getEpisodeAudioUrl(episodeId);
+      
+      console.log('Playing episode with S3 URL:', audioUrl);
 
-      if (episodeData && episodeData.audio_url) {
-        const toAbsoluteUrl = (url: string) => {
-          if (url && !url.startsWith('http') && typeof window !== 'undefined') {
-            return window.location.origin + (url.startsWith('/') ? '' : '/') + url;
-          }
-          return url;
-        };
-
-        const audioUrl = toAbsoluteUrl(episodeData.audio_url);
-
-        play(
-          episodeId,
-          episodeTitle,
-          { ja: audioUrl },
-          'ja'
-        );
-      } else if (episodeData) {
-        setError('音声ファイルが見つかりません');
-        console.warn(`No audio_url found for episode ${episodeId}`);
-      } else {
-        setError('エピソードの取得に失敗しました');
-      }
+      play(
+        episodeId,
+        episodeTitle,
+        { ja: audioUrl },
+        'ja'
+      );
     } catch (err) {
-      setError('エピソードの取得に失敗しました');
-      console.error('Failed to fetch episode:', err);
+      setError('エピソードの再生に失敗しました');
+      console.error('Failed to play episode:', err);
     } finally {
       setIsLoading(false);
       setSelectedEpisode(null);
