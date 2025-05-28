@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ニュースオーディオ - Medium記事の要約と音声サービス",
-  description: "Mediumの記事を要約し、日本語と英語の音声に変換するサービスです。",
+  title: "はてブ Tech Radio - はてなブックマーク［テクノロジー］カテゴリの音声サービス",
+  description: "はてなブックマーク［テクノロジー］カテゴリの人気記事を要約し、最新のテクノロジートレンドを音声でお届けします。",
 };
 
 export default function RootLayout({

@@ -74,7 +74,7 @@ export default function Home() {
     <Layout>
       <div className="mb-6">
         <p className="text-sm text-gray-500">
-          最新のITニュースをAIが要約し、音声で聴けるサービスです
+          はてなブックマーク［テクノロジー］カテゴリの人気記事を要約し、最新のテクノロジートレンドを音声でお届けします。
         </p>
         {totalEpisodes > 0 && (
           <p className="mt-1 text-sm text-gray-500">
