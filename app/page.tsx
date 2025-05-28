@@ -73,8 +73,7 @@ export default function Home() {
   return (
     <Layout>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">ITニュース 音声まとめ</h1>
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="text-sm text-gray-500">
           最新のITニュースをAIが要約し、音声で聴けるサービスです
         </p>
         {totalEpisodes > 0 && (
