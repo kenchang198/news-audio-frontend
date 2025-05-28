@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useAudio } from '@/contexts/AudioContext';
 import * as audioUtils from '@/utils/audioPlayer';
-import LanguageToggle from './LanguageToggle';
 
 const FooterPlayer: React.FC = () => {
   const { nowPlaying, pause, stop, nextTrack, prevTrack, setLanguage, isVisible, resumePlayback } = useAudio();
@@ -172,11 +171,7 @@ const FooterPlayer: React.FC = () => {
                 ></div>
               </div>
               
-              {/* 言語切り替え */}
-              <LanguageToggle
-                language={nowPlaying.language}
-                onChange={handleLanguageChange}
-              />
+              {/* 言語切り替え - Issue #1で削除 */}
               
               {/* 閉じるボタン */}
               <button
