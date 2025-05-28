@@ -14,7 +14,7 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalEpisodes, setTotalEpisodes] = useState(0);
-  const pageSize = 10; // 1ページあたりの表示件数
+  const pageSize = 5; // 1ページあたりの表示件数
 
   // エピソードデータを取得
   const loadEpisodes = async (page: number) => {
