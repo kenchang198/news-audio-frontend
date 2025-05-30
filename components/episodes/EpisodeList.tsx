@@ -3,6 +3,7 @@ import { EpisodeSummary } from '@/types';
 import { getEpisode } from '@/services/api';
 import { getEpisodeAudioUrl } from '@/services/news/newsService';
 import { useAudio } from '@/contexts/AudioContext';
+import { formatEpisodeTitle } from '@/utils/dateUtils';
 
 interface EpisodeListProps {
   episodes: EpisodeSummary[];
@@ -132,7 +133,7 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
                   <div className="flex-1">
                     <div className="block">
                       <h3 className="text-lg font-medium text-gray-900">
-                        {episode.title}
+                        {formatEpisodeTitle(episode.episode_id, episode.created_at)}
                       </h3>
                       
                       <div className="mt-2 flex justify-between items-center">
