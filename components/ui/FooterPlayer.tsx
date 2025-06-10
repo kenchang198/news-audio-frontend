@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useAudio } from '@/contexts/AudioContext';
 import * as audioUtils from '@/utils/audioPlayer';
+import { formatEpisodeTitle } from '@/utils/dateUtils';
 
 const FooterPlayer: React.FC = () => {
   const { nowPlaying, pause, stop, nextTrack, prevTrack, setLanguage, isVisible, resumePlayback } = useAudio();
@@ -112,7 +113,9 @@ const FooterPlayer: React.FC = () => {
         <div className="flex items-center space-x-4">
           {/* タイトル */}
           <div className="flex-shrink-0 max-w-xs overflow-hidden">
-            <p className="text-sm font-medium text-gray-800 truncate">{nowPlaying.title}</p>
+            <p className="text-sm font-medium text-gray-800 truncate">
+              {nowPlaying.episodeId ? formatEpisodeTitle(nowPlaying.episodeId) : nowPlaying.title}
+            </p>
             {isPlaylist && (
               <p className="text-xs text-gray-500">
                 トラック {currentTrackIndex + 1} / {totalTracks}
