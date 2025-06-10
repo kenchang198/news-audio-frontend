@@ -17,18 +17,33 @@ const FooterPlayer: React.FC = () => {
     };
 
     const updateDuration = () => {
-      setDuration(audioUtils.getDuration());
+      const newDuration = audioUtils.getDuration();
+      if (newDuration && newDuration > 0) {
+        setDuration(newDuration);
+      }
     };
 
     audioUtils.onTimeUpdate(updateTime);
     audioUtils.onLoadedMetadata(updateDuration);
+    
+    const audio = audioUtils.getAudioInstance();
+    const handleLoadedData = () => {
+      updateDuration();
+    };
+    audio.addEventListener('loadeddata', handleLoadedData);
 
     // 初期値設定
     setCurrentTime(audioUtils.getCurrentTime());
-    setDuration(audioUtils.getDuration());
+    const initialDuration = audioUtils.getDuration();
+    if (initialDuration && initialDuration > 0) {
+      setDuration(initialDuration);
+    }
 
     return () => {
-      // イベントリスナーのクリーンアップ
+      audioUtils.onTimeUpdate(() => {});
+      audioUtils.onLoadedMetadata(() => {});
+      const audio = audioUtils.getAudioInstance();
+      audio.removeEventListener('loadeddata', handleLoadedData);
     };
   }, [nowPlaying]);
 

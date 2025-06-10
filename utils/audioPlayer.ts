@@ -222,7 +222,8 @@ export const getCurrentTime = (): number => {
 // 総再生時間を取得
 export const getDuration = (): number => {
   const audio = getAudioInstance();
-  return audio.duration || 0;
+  const duration = audio.duration;
+  return (duration && !isNaN(duration) && isFinite(duration)) ? duration : 0;
 };
 
 // 再生位置を設定
