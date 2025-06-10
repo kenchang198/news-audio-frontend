@@ -1,11 +1,22 @@
 export const formatEpisodeTitle = (episodeId: string, createdAt?: string): string => {
-  const dateStr = episodeId.match(/^\d{4}-\d{2}-\d{2}$/) ? episodeId : createdAt?.split(' ')[0];
+  let dateStr = episodeId.match(/^\d{4}-\d{2}-\d{2}$/) ? episodeId : createdAt?.split(' ')[0];
   
   if (!dateStr) {
-    return episodeId; // fallback to original if date parsing fails
+    const dateMatch = episodeId.match(/(\d{4}-\d{2}-\d{2})/);
+    if (dateMatch) {
+      dateStr = dateMatch[1];
+    }
+  }
+  
+  if (!dateStr) {
+    return episodeId;
   }
   
   const date = new Date(dateStr);
+  if (isNaN(date.getTime())) {
+    return episodeId;
+  }
+  
   const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
   const dayOfWeek = dayNames[date.getDay()];
   
