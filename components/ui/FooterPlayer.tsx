@@ -8,6 +8,10 @@ const FooterPlayer: React.FC = () => {
   const [duration, setDuration] = useState(0);
   const progressRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    setDuration(0);
+  }, [nowPlaying]);
+
   // 再生時間の更新を監視
   useEffect(() => {
     if (!nowPlaying) return;
