@@ -38,7 +38,7 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
   }, [nowPlaying]);
 
   // エピソードの再生/一時停止を切り替え
-  const handlePlayToggle = async (episodeId: string, episodeTitle: string) => {
+  const handlePlayToggle = async (episodeId: string, episodeTitle: string, createdAt: string) => {
     if (playingEpisodes[episodeId]) {
       pause();
       return;
@@ -63,7 +63,8 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
         episodeId,
         episodeTitle,
         { ja: audioUrl },
-        'ja'
+        'ja',
+        createdAt
       );
     } catch (err) {
       setError('エピソードの再生に失敗しました');
@@ -108,7 +109,7 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
                 <div className="flex items-start">
                   {/* 再生/一時停止ボタン（左側に配置） - 大きく */}
                   <button
-                    onClick={() => handlePlayToggle(episode.episode_id, episode.title)}
+                    onClick={() => handlePlayToggle(episode.episode_id, episode.title, episode.created_at)}
                     className="mr-4 p-3 rounded-full bg-blue-500 text-white hover:bg-blue-600 flex items-center justify-center"
                     disabled={isLoadingThis}
                     aria-label={isPlayingThis ? '一時停止' : 'フッターで再生'}
