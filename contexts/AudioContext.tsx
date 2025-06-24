@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { Language } from '@/types';
 import * as audioUtils from '@/utils/audioPlayer';
+import { formatEpisodeTitle } from '@/utils/dateUtils';
 
 interface NowPlaying {
   // 単一記事の場合はarticleId, プレイリストの場合はepisodeId
@@ -26,7 +27,7 @@ interface NowPlaying {
 
 interface AudioContextType {
   nowPlaying: NowPlaying | null;
-  play: (articleId: string, title: string, audioUrls: { ja?: string; en?: string }, language: Language) => void;
+  play: (articleId: string, title: string, audioUrls: { ja?: string; en?: string }, language: Language, createdAt?: string) => void;
   playPlaylist: (episodeId: string, title: string, playlistUrls: { ja: string[], en: string[] }, language: Language) => void;
   pause: () => void;
   stop: () => void;
@@ -123,7 +124,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
   }, []); // 空の依存配列でアンマウント時のみ実行
 
   // 単一の音声を再生
-  const play = (articleId: string, title: string, audioUrls: { ja?: string; en?: string }, language: Language) => {
+  const play = (articleId: string, title: string, audioUrls: { ja?: string; en?: string }, language: Language, createdAt?: string) => {
     const currentUrl = language === 'ja' ? audioUrls.ja : audioUrls.en;
     
     if (!currentUrl) return;
@@ -133,9 +134,11 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
       audioUtils.stopAudio();
     }
 
+    const formattedTitle = createdAt ? formatEpisodeTitle(articleId, createdAt) : title;
+
     setNowPlaying({
       articleId,
-      title,
+      title: formattedTitle,
       audioUrls,
       language,
       isPlaying: true,
