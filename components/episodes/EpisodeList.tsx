@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { EpisodeSummary } from '@/types';
-import { getEpisode } from '@/services/api';
 import { getEpisodeAudioUrl } from '@/services/news/newsService';
 import { useAudio } from '@/contexts/AudioContext';
 import { formatEpisodeTitle } from '@/utils/dateUtils';
@@ -141,7 +140,7 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
                         <div className="flex items-center text-sm text-gray-500">
                           {('source' in episode) && (
                             <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-medium">
-                              {(episode as any).source}
+                              {(episode as EpisodeSummary & { source: string }).source}
                             </span>
                           )}
                         </div>
@@ -156,7 +155,7 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
                       
                       {('article_count' in episode) && (
                         <p className="mt-2 text-sm text-gray-500">
-                          {(episode as any).article_count}件の記事
+                          {(episode as EpisodeSummary & { article_count: number }).article_count}件の記事
                         </p>
                       )}
                       

@@ -3,7 +3,7 @@ import { useAudio } from '@/contexts/AudioContext';
 import * as audioUtils from '@/utils/audioPlayer';
 
 const FooterPlayer: React.FC = () => {
-  const { nowPlaying, pause, stop, nextTrack, prevTrack, setLanguage, isVisible, resumePlayback } = useAudio();
+  const { nowPlaying, pause, stop, nextTrack, prevTrack, isVisible, resumePlayback } = useAudio();
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const progressRef = useRef<HTMLDivElement>(null);
@@ -69,10 +69,7 @@ const FooterPlayer: React.FC = () => {
     }
   };
 
-  // 言語切り替え処理
-  const handleLanguageChange = (newLanguage: 'ja' | 'en') => {
-    setLanguage(newLanguage);
-  };
+
 
   // プログレスバーのクリック処理
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {

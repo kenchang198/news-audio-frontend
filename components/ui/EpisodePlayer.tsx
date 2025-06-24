@@ -107,14 +107,7 @@ const EpisodePlayer: React.FC<EpisodePlayerProps> = ({
     }, 100);
   };
   
-  // シークバーの操作
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!hasAudio || !audioRef.current) return;
-    
-    const newTime = parseFloat(e.target.value);
-    audioRef.current.currentTime = newTime;
-    setCurrentTime(newTime);
-  };
+
   
   // 音声の読み込み完了時
   const handleLoadedMetadata = () => {
@@ -165,7 +158,7 @@ const EpisodePlayer: React.FC<EpisodePlayerProps> = ({
         setIsPlaying(false);
       });
     }
-  }, [currentAudioUrl]);
+  }, [currentAudioUrl, isPlaying]);
   
   // 時間の表示フォーマット（MM:SS）
   const formatTime = (time: number) => {

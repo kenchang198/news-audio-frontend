@@ -68,7 +68,7 @@ export default function Home() {
   // 初回レンダリング時にデータを取得
   useEffect(() => {
     loadEpisodes(currentPage);
-  }, []);
+  }, [currentPage]);
 
   return (
     <Layout>

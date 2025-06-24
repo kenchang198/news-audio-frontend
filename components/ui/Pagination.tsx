@@ -25,7 +25,7 @@ const Pagination: React.FC<PaginationProps> = ({
     const sidePages = Math.floor((maxPagesToShow - 1) / 2);
     
     let startPage = Math.max(1, currentPage - sidePages);
-    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+    const endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
     
     // 最大ページ数を超えないように調整
     if (endPage - startPage + 1 < maxPagesToShow) {
