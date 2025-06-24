@@ -56,6 +56,11 @@
 `.env.local`ファイルをプロジェクトのルートに作成し、以下の環境変数を設定してください：
 
 ```bash
+# サイト設定
+NEXT_PUBLIC_SITE_NAME=ニュースオーディオ
+NEXT_PUBLIC_SITE_TITLE=ニュースオーディオ - Medium記事の要約と音声サービス
+NEXT_PUBLIC_SITE_DESCRIPTION=Mediumの記事を要約し、日本語と英語の音声に変換するサービスです。
+
 # 本番環境設定（S3バケット直参照方式を使用）
 NEXT_PUBLIC_USE_MOCK_DATA=false
 NEXT_PUBLIC_API_URL=
@@ -67,6 +72,16 @@ NEXT_PUBLIC_S3_BUCKET_URL=https://your-bucket-name.s3.region.amazonaws.com
 # NEXT_PUBLIC_API_URL=http://localhost:3001/api
 # NEXT_PUBLIC_S3_BUCKET_URL=
 ```
+
+### サイト設定について
+
+- `NEXT_PUBLIC_SITE_NAME`: サイト名（番組名）
+- `NEXT_PUBLIC_SITE_TITLE`: ページタイトル（ブラウザのタブに表示される）
+- `NEXT_PUBLIC_SITE_DESCRIPTION`: サイトの説明文（SEO 用）
+
+これらの環境変数を設定することで、サイト名や番組名を簡単に変更できます。環境変数が設定されていない場合は、`config/site.ts`のデフォルト値が使用されます。
+
+### その他の設定
 
 - `NEXT_PUBLIC_USE_MOCK_DATA=false`: S3 バケット直参照方式を使用
 - `NEXT_PUBLIC_USE_MOCK_DATA=true`: モックデータを使用（開発環境）
