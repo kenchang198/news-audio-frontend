@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "name": "news-audio-frontend",
+  "name": "tech-news-audio-player-ken",
   "builds": [
     {
       "src": "package.json",
