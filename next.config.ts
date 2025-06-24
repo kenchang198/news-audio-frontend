@@ -1,16 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  output: 'standalone',
+  trailingSlash: false,
+  
   async headers() {
     return [
       {
-        // 全てのルートに適用
-        source: '/:path*',
+        // APIルートとページ
+        source: '/((?!mock/).*)',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'no-store',
+            value: 'public, max-age=0, must-revalidate',
           },
         ],
       },
@@ -20,11 +22,25 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=0, must-revalidate',
+            value: 'public, max-age=3600',
           },
           {
             key: 'Content-Type',
             value: 'audio/mpeg',
+          },
+        ],
+      },
+      {
+        // JSONファイル用
+        source: '/mock/:path*.json',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=300',
+          },
+          {
+            key: 'Content-Type',
+            value: 'application/json',
           },
         ],
       },
