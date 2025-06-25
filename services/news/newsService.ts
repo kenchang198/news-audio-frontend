@@ -104,9 +104,14 @@ export const fetchLatestEpisode = async () => {
         console.error('S3_DATA_BASE_URL is not configured. Please set NEXT_PUBLIC_S3_BUCKET_URL environment variable.');
         return null;
       }
-      console.log('Fetching latest episode from S3 bucket');
-      const response = await axios.get(`${S3_DATA_BASE_URL}/latest_episode.json`);
-      return response.data;
+      console.log('Fetching latest episode from episodes list');
+      const episodesList = await fetchEpisodesList();
+      if (episodesList && episodesList.length > 0) {
+        // エピソードリストの最初のエピソードが最新と仮定
+        return episodesList[0];
+      }
+      console.error('No episodes found in episodes list');
+      return null;
     }
   } catch (error) {
     console.error('Failed to fetch latest episode:', error);
@@ -139,13 +144,23 @@ export const fetchEpisodeById = async (episodeId: string) => {
       }
       console.log(`Fetching episode ${episodeId} from S3 bucket`);
       try {
-        const response = await axios.get(`${S3_DATA_BASE_URL}/episode_${episodeId}.json`);
+        const response = await axios.get(`${S3_DATA_BASE_URL}/episodes/episode_${episodeId}.json`);
         return response.data;
       } catch (e) {
-        // 該当するJSONがない場合は最新のエピソードを返す
-        console.warn(`Episode file for ID ${episodeId} not found in S3, using latest episode`);
-        const response = await axios.get(`${S3_DATA_BASE_URL}/latest_episode.json`);
-        return response.data;
+        // 該当するJSONがない場合はエピソードリストから最新のエピソードを取得
+        console.warn(`Episode file for ID ${episodeId} not found in S3, fetching from episodes list`);
+        try {
+          const episodesList = await fetchEpisodesList();
+          if (episodesList && episodesList.length > 0) {
+            // エピソードリストの最初のエピソードが最新と仮定
+            return episodesList[0];
+          }
+          console.error('No episodes found in episodes list');
+          return null;
+        } catch (fallbackError) {
+          console.error('Failed to fetch episodes list as fallback:', fallbackError);
+          return null;
+        }
       }
     }
   } catch (error) {
