@@ -3,6 +3,7 @@ import { EpisodeSummary, Episode } from '@/types';
 import { getEpisodeAudioUrl, fetchEpisodeById } from '@/services/news/newsService';
 import { useAudio } from '@/contexts/AudioContext';
 import { formatEpisodeTitle } from '@/utils/dateUtils';
+import { preloadAudio } from '@/utils/audioPlayer';
 
 interface EpisodeListProps {
   episodes: EpisodeSummary[];
@@ -26,6 +27,30 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
   const [expandedEpisodes, setExpandedEpisodes] = useState<Set<string>>(new Set());
   const [episodeDetails, setEpisodeDetails] = useState<Record<string, Episode>>({});
   const [loadingDetails, setLoadingDetails] = useState<Set<string>>(new Set());
+
+  // エピソード一覧が読み込まれたら音声をプリロード
+  useEffect(() => {
+    const preloadTopEpisodes = async () => {
+      // 最初の3つのエピソードをプリロード
+      const topEpisodes = episodes.slice(0, 3);
+      
+      await Promise.allSettled(
+        topEpisodes.map(async (episode) => {
+          try {
+            const audioUrl = getEpisodeAudioUrl(episode.episode_id);
+            await preloadAudio(audioUrl);
+            console.log(`Preloaded episode: ${episode.episode_id}`);
+          } catch (error) {
+            console.error(`Failed to preload episode ${episode.episode_id}:`, error);
+          }
+        })
+      );
+    };
+
+    if (episodes.length > 0) {
+      preloadTopEpisodes();
+    }
+  }, [episodes]);
 
   // 現在再生中のエピソードの状態を監視
   useEffect(() => {
@@ -52,14 +77,18 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
       return;
     }
     
-    setIsLoading(true);
-    setSelectedEpisode({ episode_id: episodeId, title: episodeTitle });
+    // プリロード済みの場合はローディング表示を短縮
+    const audioUrl = getEpisodeAudioUrl(episodeId);
+    const isPreloaded = true; // プリロードチェックは audioPlayer 内で実行
+    
+    if (!isPreloaded) {
+      setIsLoading(true);
+      setSelectedEpisode({ episode_id: episodeId, title: episodeTitle });
+    }
+    
     setError(null);
 
     try {
-      // S3バケット直参照方式で音声URLを取得
-      const audioUrl = getEpisodeAudioUrl(episodeId);
-      
       console.log('Playing episode with S3 URL:', audioUrl);
 
       play(

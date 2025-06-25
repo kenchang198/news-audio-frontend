@@ -136,6 +136,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({ children }) => {
 
     const formattedTitle = createdAt ? formatEpisodeTitle(articleId, createdAt) : title;
 
+    // 即座に再生状態を更新してUIの応答性を向上
     setNowPlaying({
       articleId,
       title: formattedTitle,
