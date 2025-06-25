@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { EpisodeSummary } from '@/types';
-import { getEpisodeAudioUrl } from '@/services/news/newsService';
+import { EpisodeSummary, Episode } from '@/types';
+import { getEpisodeAudioUrl, fetchEpisodeById } from '@/services/news/newsService';
 import { useAudio } from '@/contexts/AudioContext';
 import { formatEpisodeTitle } from '@/utils/dateUtils';
 
@@ -22,6 +22,10 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [playingEpisodes, setPlayingEpisodes] = useState<Record<string, boolean>>({});
+  
+  const [expandedEpisodes, setExpandedEpisodes] = useState<Set<string>>(new Set());
+  const [episodeDetails, setEpisodeDetails] = useState<Record<string, Episode>>({});
+  const [loadingDetails, setLoadingDetails] = useState<Set<string>>(new Set());
 
   // 現在再生中のエピソードの状態を監視
   useEffect(() => {
@@ -74,6 +78,42 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
     }
   };
 
+  const handleShowNoteToggle = async (episodeId: string) => {
+    const isExpanded = expandedEpisodes.has(episodeId);
+    
+    if (isExpanded) {
+      const newExpanded = new Set(expandedEpisodes);
+      newExpanded.delete(episodeId);
+      setExpandedEpisodes(newExpanded);
+    } else {
+      const newExpanded = new Set(expandedEpisodes);
+      newExpanded.add(episodeId);
+      setExpandedEpisodes(newExpanded);
+      
+      if (!episodeDetails[episodeId]) {
+        const newLoading = new Set(loadingDetails);
+        newLoading.add(episodeId);
+        setLoadingDetails(newLoading);
+        
+        try {
+          const details = await fetchEpisodeById(episodeId);
+          if (details) {
+            setEpisodeDetails(prev => ({
+              ...prev,
+              [episodeId]: details
+            }));
+          }
+        } catch (err) {
+          console.error('Failed to fetch episode details:', err);
+        } finally {
+          const newLoading = new Set(loadingDetails);
+          newLoading.delete(episodeId);
+          setLoadingDetails(newLoading);
+        }
+      }
+    }
+  };
+
   if (episodes.length === 0) {
     return (
       <div className="text-center py-10">
@@ -98,6 +138,10 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
           const episodeDate = new Date(episode.created_at);
           const isLoadingThis = isLoading && selectedEpisode?.episode_id === episode.episode_id;
           const isPlayingThis = playingEpisodes[episode.episode_id] === true;
+
+          const isExpanded = expandedEpisodes.has(episode.episode_id);
+          const isLoadingDetails = loadingDetails.has(episode.episode_id);
+          const details = episodeDetails[episode.episode_id];
 
           return (
             <div
@@ -132,9 +176,26 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
                   {/* エピソード情報 */}
                   <div className="flex-1">
                     <div className="block">
-                      <h3 className="text-lg font-medium text-gray-900">
-                        {formatEpisodeTitle(episode.episode_id, episode.created_at)}
-                      </h3>
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-medium text-gray-900">
+                          {formatEpisodeTitle(episode.episode_id, episode.created_at)}
+                        </h3>
+                        
+                        {/* Show Note toggle button */}
+                        <button
+                          onClick={() => handleShowNoteToggle(episode.episode_id)}
+                          className="ml-2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                          aria-label={isExpanded ? 'Show Noteを閉じる' : 'Show Noteを開く'}
+                        >
+                          <svg 
+                            className={`h-5 w-5 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+                            fill="currentColor" 
+                            viewBox="0 0 20 20"
+                          >
+                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      </div>
                       
                       <div className="mt-2 flex justify-between items-center">
                         <div className="flex items-center text-sm text-gray-500">
@@ -158,11 +219,52 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
                           {(episode as EpisodeSummary & { article_count: number }).article_count}件の記事
                         </p>
                       )}
-                      
-                      {/* 詳細リンクはMVPでは非表示 */}
                     </div>
                   </div>
                 </div>
+                
+                {/* Show Notes section */}
+                {isExpanded && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <h4 className="text-sm font-medium text-gray-900 mb-3">Show Notes</h4>
+                    
+                    {isLoadingDetails ? (
+                      <div className="flex items-center justify-center py-4">
+                        <svg className="animate-spin h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span className="ml-2 text-sm text-gray-500">記事を読み込み中...</span>
+                      </div>
+                    ) : details && details.articles && details.articles.length > 0 ? (
+                      <ul className="space-y-2">
+                        {details.articles.map((article, index) => (
+                          <li key={article.id || index} className="flex items-start">
+                            <span className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3"></span>
+                            <div className="flex-1">
+                              {article.link ? (
+                                <a
+                                  href={article.link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                                >
+                                  {article.title}
+                                </a>
+                              ) : (
+                                <span className="text-sm text-gray-700">
+                                  {article.title}
+                                </span>
+                              )}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-gray-500">記事情報が見つかりませんでした。</p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           );
