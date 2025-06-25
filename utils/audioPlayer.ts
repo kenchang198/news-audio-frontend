@@ -13,6 +13,68 @@ export const getAudioInstance = (): HTMLAudioElement => {
 // BlobURLの保持用キャッシュ
 const blobUrlCache: Record<string, string> = {};
 
+// プリロードキャッシュ
+interface PreloadEntry {
+  blobUrl: string;
+  audio: HTMLAudioElement;
+  isReady: boolean;
+}
+const preloadCache: Record<string, PreloadEntry> = {};
+
+// 音声をプリロード
+export const preloadAudio = async (url: string): Promise<void> => {
+  if (preloadCache[url]?.isReady) {
+    console.log('Audio already preloaded:', url);
+    return;
+  }
+
+  try {
+    const absoluteUrl = (url.startsWith('http') || url.startsWith('blob:')) 
+      ? url 
+      : window.location.origin + (url.startsWith('/') ? '' : '/') + url;
+
+    console.log('Preloading audio:', absoluteUrl);
+    
+    const response = await fetch(absoluteUrl, { cache: 'force-cache' });
+    if (!response.ok) {
+      throw new Error(`Failed to preload audio: ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    
+    const preloadAudio = new Audio();
+    preloadAudio.preload = 'auto';
+    preloadAudio.src = blobUrl;
+    
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('Preload timeout'));
+      }, 10000);
+      
+      preloadAudio.oncanplaythrough = () => {
+        clearTimeout(timeout);
+        resolve();
+      };
+      
+      preloadAudio.onerror = () => {
+        clearTimeout(timeout);
+        reject(new Error('Preload failed'));
+      };
+    });
+    
+    preloadCache[url] = {
+      blobUrl,
+      audio: preloadAudio,
+      isReady: true
+    };
+    
+    console.log('Audio preloaded successfully:', url);
+  } catch (error) {
+    console.error('Failed to preload audio:', error);
+  }
+};
+
 // 音声を再生
 export const playAudio = (url: string): Promise<void> => {
   const audio = getAudioInstance();
@@ -41,106 +103,63 @@ export const playAudio = (url: string): Promise<void> => {
     audio.removeAttribute('src'); // srcを明示的にクリア
   }
   
+  // プリロードされた音声があるかチェック
+  const preloaded = preloadCache[url];
+  if (preloaded?.isReady) {
+    console.log('Using preloaded audio:', url);
+    audio.src = preloaded.blobUrl;
+    audio.currentTime = 0;
+    cachedAudioSrc = url;
+    
+    return audio.play().then(() => {
+      console.log('Preloaded audio playback started successfully');
+    }).catch((error) => {
+      console.error('Preloaded audio play() failed:', error);
+      throw error;
+    });
+  }
+  
+  // プリロードがない場合は従来の方法で再生
   return new Promise(async (resolve, reject) => {
     try {
-      // 絶対URLを確保（すでに絶対URLであればそのまま）
+      // 絶対URLを確保
       const absoluteUrl = (url.startsWith('http') || url.startsWith('blob:')) 
         ? url 
         : window.location.origin + (url.startsWith('/') ? '' : '/') + url;
       
-      console.log('Using absolute URL:', absoluteUrl);
+      console.log('Fetching audio (no preload):', absoluteUrl);
       
-      // Blobとして音声を取得
-      console.log('Fetching audio file as blob...');
-      const response = await fetch(absoluteUrl, { cache: 'no-store' });
-      
+      const response = await fetch(absoluteUrl, { cache: 'force-cache' });
       if (!response.ok) {
-        throw new Error(`Failed to fetch audio: ${response.status} ${response.statusText}`);
+        throw new Error(`Failed to fetch audio: ${response.status}`);
       }
       
       const blob = await response.blob();
-      console.log('Audio blob fetched successfully, MIME type:', blob.type);
-      
-      // BlobURLを作成
       const blobUrl = URL.createObjectURL(blob);
-      console.log('Created Blob URL:', blobUrl);
       
-      // 新しいURLを設定
       audio.src = blobUrl;
-      
-      // 先頭から確実に再生するために位置をリセット
-      try {
-        audio.currentTime = 0;
-      } catch (e) {
-        // Safari などで currentTime に即座にアクセスできない場合があるため無視
-      }
-      
-      // URLをキャッシュ
+      audio.currentTime = 0;
       cachedAudioSrc = url;
       
-      // エラーイベントリスナーを追加
-      const handleError = (event: Event) => {
-        console.error('Audio error event occurred:', event);
-        if (audio.error) {
-          console.error('Audio error code:', audio.error.code);
-          console.error('Audio error message:', audio.error.message);
-        }
-      };
-      
-      // 既存のイベントリスナーをクリア
-      audio.oncanplay = null;
-      audio.onloadeddata = null;
-      audio.onerror = null;
-      
-      audio.addEventListener('error', handleError);
-      
-      // 音声メタデータの読み込み完了を検知（duration など取得可能）
-      audio.onloadedmetadata = () => {
-        console.log('Metadata loaded, resetting to start and playing');
-        try {
-          audio.currentTime = 0;
-        } catch {}
-        audio.play()
-          .then(() => {
-            console.log('Audio playback started successfully');
-            audio.removeEventListener('error', handleError);
-            resolve();
-          })
-          .catch((error) => {
-            console.error('Audio play() failed:', error);
-            audio.removeEventListener('error', handleError);
-            reject(error);
-          });
-      };
-      
-      // 5秒以内に再生できない場合はタイムアウト
       const timeout = setTimeout(() => {
-        console.error('Audio loading timeout');
-        audio.removeEventListener('error', handleError);
         reject(new Error('Audio loading timeout'));
       }, 5000);
       
-      // 音声データが正常に読み込まれたことを検知
-      audio.onloadeddata = () => {
+      audio.oncanplaythrough = () => {
         clearTimeout(timeout);
-        console.log('Audio loaded successfully');
+        audio.play()
+          .then(() => {
+            console.log('Audio playback started');
+            resolve();
+          })
+          .catch(reject);
       };
       
-      // エラーハンドリング
-      audio.onerror = (event) => {
-        console.error('Audio error event triggered in onerror handler:', event);
+      audio.onerror = () => {
         clearTimeout(timeout);
-        audio.removeEventListener('error', handleError);
-        
-        // エラーオブジェクトがある場合は詳細を表示
-        if (audio.error) {
-          const errorMessage = `Audio error: ${audio.error.message || 'unknown error'} (code: ${audio.error.code})`;
-          console.error(errorMessage);
-          reject(new Error(errorMessage));
-        } else {
-          reject(new Error('Unknown audio error occurred'));
-        }
+        reject(new Error('Audio load error'));
       };
+      
     } catch (error) {
       console.error('Unexpected error in playAudio:', error);
       reject(error);
@@ -177,6 +196,18 @@ export const resumeAudio = (): Promise<void> => {
 export const isAudioPlaying = (): boolean => {
   const audio = getAudioInstance();
   return !audio.paused;
+};
+
+// プリロードキャッシュをクリア
+export const clearPreloadCache = (): void => {
+  Object.keys(preloadCache).forEach(url => {
+    const entry = preloadCache[url];
+    if (entry.blobUrl) {
+      URL.revokeObjectURL(entry.blobUrl);
+    }
+    delete preloadCache[url];
+  });
+  console.log('Preload cache cleared');
 };
 
 // 再生を停止して音声をクリア
