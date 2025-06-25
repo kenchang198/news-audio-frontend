@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "[DEVELOP] はてブ Tech Radio - はてなブックマーク［テクノロジー］カテゴリの音声サービス",
+  title: "はてブ Tech Radio - はてなブックマーク［テクノロジー］カテゴリの音声サービス",
   description: "はてなブックマーク［テクノロジー］カテゴリの人気記事を要約し、最新のテクノロジートレンドを音声でお届けします。",
 };
 
