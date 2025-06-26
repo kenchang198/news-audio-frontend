@@ -139,7 +139,7 @@ export const fetchEpisodeById = async (episodeId: string) => {
       }
       console.log(`Fetching episode ${episodeId} from S3 bucket`);
       try {
-        const response = await axios.get(`${S3_DATA_BASE_URL}/episode_${episodeId}.json`);
+        const response = await axios.get(`${S3_DATA_BASE_URL}/episodes/episode_${episodeId}.json`);
         return response.data;
       } catch (e) {
         // 該当するJSONがない場合は最新のエピソードを返す
