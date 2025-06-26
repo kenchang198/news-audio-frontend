@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Language } from '@/types';
 import LanguageToggle from './LanguageToggle';
+import { SimpleBGM } from '../audio/SimpleBGM';
 
 interface EpisodePlayerProps {
   englishAudioUrls: string[];
@@ -179,8 +180,12 @@ const EpisodePlayer: React.FC<EpisodePlayerProps> = ({
         onLoadedMetadata={handleLoadedMetadata}
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleEnded}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
         style={{ display: 'none' }}
       />
+      
+      <SimpleBGM isPlaying={isPlaying} />
       
       {hasAudio ? (
         <div className="bg-gray-100 rounded-full p-2 flex items-center space-x-2">
