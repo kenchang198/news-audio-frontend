@@ -1,12 +1,22 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useAudio } from '@/contexts/AudioContext';
 import * as audioUtils from '@/utils/audioPlayer';
+import { SimpleBGM } from '../audio/SimpleBGM';
 
 const FooterPlayer: React.FC = () => {
   const { nowPlaying, pause, stop, nextTrack, prevTrack, isVisible, resumePlayback } = useAudio();
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [userHasInteracted, setUserHasInteracted] = useState(false);
   const progressRef = useRef<HTMLDivElement>(null);
+
+  // nowPlayingの状態変更を監視
+  useEffect(() => {
+    // エピソードが再生開始されたら自動的にユーザーインタラクションをマーク
+    if (nowPlaying?.isPlaying && !userHasInteracted) {
+      setUserHasInteracted(true);
+    }
+  }, [nowPlaying, userHasInteracted]);
 
   useEffect(() => {
     setDuration(0);
@@ -55,6 +65,13 @@ const FooterPlayer: React.FC = () => {
   const togglePlayPause = async () => {
     if (!nowPlaying) return;
 
+    // 初回ユーザーインタラクションをマーク
+    if (!userHasInteracted) {
+      setUserHasInteracted(true);
+    }
+
+
+
     if (nowPlaying.isPlaying) {
       pause();
     } else {
@@ -69,11 +86,14 @@ const FooterPlayer: React.FC = () => {
     }
   };
 
-
-
   // プログレスバーのクリック処理
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!progressRef.current || !nowPlaying) return;
+    
+    // ユーザーインタラクションをマーク
+    if (!userHasInteracted) {
+      setUserHasInteracted(true);
+    }
     
     const rect = progressRef.current.getBoundingClientRect();
     const clickPosition = e.clientX - rect.left;
@@ -109,6 +129,7 @@ const FooterPlayer: React.FC = () => {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-md z-50">
+      <SimpleBGM isPlaying={nowPlaying.isPlaying && userHasInteracted} />
       <div className="max-w-7xl mx-auto px-4 py-2 sm:px-6 lg:px-8">
         <div className="flex items-center space-x-4">
           {/* タイトル */}
@@ -127,7 +148,10 @@ const FooterPlayer: React.FC = () => {
               {/* プレイリスト用の前へボタン */}
               {isPlaylist && (
                 <button
-                  onClick={prevTrack}
+                  onClick={() => {
+                    if (!userHasInteracted) setUserHasInteracted(true);
+                    prevTrack();
+                  }}
                   disabled={currentTrackIndex <= 0}
                   className={`text-gray-700 hover:text-gray-900 focus:outline-none p-1 ${currentTrackIndex <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                   aria-label="前のトラック"
@@ -159,7 +183,10 @@ const FooterPlayer: React.FC = () => {
               {/* プレイリスト用の次へボタン */}
               {isPlaylist && (
                 <button
-                  onClick={nextTrack}
+                  onClick={() => {
+                    if (!userHasInteracted) setUserHasInteracted(true);
+                    nextTrack();
+                  }}
                   disabled={currentTrackIndex >= totalTracks - 1}
                   className={`text-gray-700 hover:text-gray-900 focus:outline-none p-1 ${currentTrackIndex >= totalTracks - 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
                   aria-label="次のトラック"
@@ -191,7 +218,10 @@ const FooterPlayer: React.FC = () => {
               
               {/* 閉じるボタン */}
               <button
-                onClick={stop}
+                onClick={() => {
+                  if (!userHasInteracted) setUserHasInteracted(true);
+                  stop();
+                }}
                 className="text-gray-500 hover:text-gray-700 p-1"
                 aria-label="閉じる"
               >
