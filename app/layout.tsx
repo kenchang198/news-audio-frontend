@@ -15,6 +15,27 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "はてブ Tech Radio - はてなブックマーク［テクノロジー］カテゴリの音声サービス",
   description: "はてなブックマーク［テクノロジー］カテゴリの人気記事を要約し、最新のテクノロジートレンドを音声でお届けします。",
+  openGraph: {
+    title: "はてブ Tech Radio - はてなブックマーク［テクノロジー］カテゴリの音声サービス",
+    description: "はてなブックマーク［テクノロジー］カテゴリの人気記事を要約し、最新のテクノロジートレンドを音声でお届けします。",
+    type: "website",
+    locale: "ja_JP",
+    siteName: "はてブ Tech Radio",
+    images: [
+      {
+        url: "https://news-audio-files-kenchang198-dev.s3.ap-northeast-1.amazonaws.com/assets/hateb-tech-ogimage.png",
+        width: 1200,
+        height: 630,
+        alt: "はてブ Tech Radio",
+      }
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "はてブ Tech Radio - はてなブックマーク［テクノロジー］カテゴリの音声サービス",
+    description: "はてなブックマーク［テクノロジー］カテゴリの人気記事を要約し、最新のテクノロジートレンドを音声でお届けします。",
+    images: ["https://news-audio-files-kenchang198-dev.s3.ap-northeast-1.amazonaws.com/assets/hateb-tech-ogimage.png"],
+  },
 };
 
 export default function RootLayout({
