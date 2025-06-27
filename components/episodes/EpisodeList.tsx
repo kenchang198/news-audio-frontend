@@ -210,7 +210,10 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
                           {formatEpisodeTitle(episode.episode_id, episode.created_at)}
                         </h3>
                         
-                        <div className="flex items-center text-sm text-gray-500">
+                        <button 
+                          onClick={() => handleShowNoteToggle(episode.episode_id)}
+                          className="flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                        >
                           <span className="mr-1">Show Notes</span>
                           <svg 
                             className={`h-4 w-4 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
@@ -219,7 +222,7 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
                           >
                             <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                           </svg>
-                        </div>
+                        </button>
                       </div>
                       
                       <div className="mt-2 flex justify-between items-center">
