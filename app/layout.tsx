@@ -13,6 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://news-audio-frontend.vercel.app"),
   title: "はてブ Tech Radio - はてなブックマーク［テクノロジー］カテゴリの音声サービス",
   description: "はてなブックマーク［テクノロジー］カテゴリの人気記事を要約し、最新のテクノロジートレンドを音声でお届けします。",
   keywords: ["はてなブックマーク", "テクノロジー", "音声", "ニュース", "要約", "ポッドキャスト"],
@@ -24,7 +25,6 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL("https://news-audio-frontend.vercel.app"),
   alternates: {
     canonical: "https://news-audio-frontend.vercel.app",
   },
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     siteName: "はてブ Tech Radio",
     images: [
       {
-        url: "https://news-audio-files-kenchang198-dev.s3.ap-northeast-1.amazonaws.com/assets/hateb-tech-ogimage.png",
+        url: "/ogimage.png",  // publicディレクトリに配置して相対パスで指定
         width: 1200,
         height: 630,
         alt: "はてブ Tech Radio - はてなブックマーク［テクノロジー］カテゴリの音声サービス",
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     creator: "@hateb_tech_radio", 
     title: "はてブ Tech Radio - はてなブックマーク［テクノロジー］カテゴリの音声サービス",
     description: "はてなブックマーク［テクノロジー］カテゴリの人気記事を要約し、最新のテクノロジートレンドを音声でお届けします。",
-    images: ["https://news-audio-files-kenchang198-dev.s3.ap-northeast-1.amazonaws.com/assets/hateb-tech-ogimage.png"],
+    images: ["/ogimage.png"],
   },
   robots: {
     index: true,
@@ -76,18 +76,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <head>
-        {/* Slack OGP compatibility */}
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        <meta property="og:image:type" content="image/png" />
-        <meta property="og:image:secure_url" content="https://news-audio-files-kenchang198-dev.s3.ap-northeast-1.amazonaws.com/assets/hateb-tech-ogimage.png" />
-        <meta name="slack-app-id" content="" />
-        {/* Additional metadata for better social sharing */}
-        <meta property="article:author" content="はてブ Tech Radio" />
-        <meta property="article:publisher" content="https://news-audio-frontend.vercel.app" />
-        <meta name="theme-color" content="#3B82F6" />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}
       >
