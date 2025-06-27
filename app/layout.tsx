@@ -19,6 +19,7 @@ export const metadata: Metadata = {
     title: "はてブ Tech Radio - はてなブックマーク［テクノロジー］カテゴリの音声サービス",
     description: "はてなブックマーク［テクノロジー］カテゴリの人気記事を要約し、最新のテクノロジートレンドを音声でお届けします。",
     type: "website",
+    url: "https://news-audio-frontend.vercel.app",
     locale: "ja_JP",
     siteName: "はてブ Tech Radio",
     images: [
@@ -26,7 +27,8 @@ export const metadata: Metadata = {
         url: "https://news-audio-files-kenchang198-dev.s3.ap-northeast-1.amazonaws.com/assets/hateb-tech-ogimage.png",
         width: 1200,
         height: 630,
-        alt: "はてブ Tech Radio",
+        alt: "はてブ Tech Radio - はてなブックマーク［テクノロジー］カテゴリの音声サービス",
+        type: "image/png",
       }
     ],
   },
