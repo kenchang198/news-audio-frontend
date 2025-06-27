@@ -28,30 +28,6 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
   const [episodeDetails, setEpisodeDetails] = useState<Record<string, Episode>>({});
   const [loadingDetails, setLoadingDetails] = useState<Set<string>>(new Set());
 
-  // エピソード一覧が読み込まれたら音声をプリロード
-  useEffect(() => {
-    const preloadTopEpisodes = async () => {
-      // 最初の3つのエピソードをプリロード
-      const topEpisodes = episodes.slice(0, 3);
-      
-      await Promise.allSettled(
-        topEpisodes.map(async (episode) => {
-          try {
-            const audioUrl = getEpisodeAudioUrl(episode.episode_id);
-            await preloadAudio(audioUrl);
-            console.log(`Preloaded episode: ${episode.episode_id}`);
-          } catch (error) {
-            console.error(`Failed to preload episode ${episode.episode_id}:`, error);
-          }
-        })
-      );
-    };
-
-    if (episodes.length > 0) {
-      preloadTopEpisodes();
-    }
-  }, [episodes]);
-
   // 現在再生中のエピソードの状態を監視
   useEffect(() => {
     const newPlayingState: Record<string, boolean> = {};
@@ -202,28 +178,27 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
                     )}
                   </button>
                   
-                  {/* エピソード情報 */}
-                  <div className="flex-1">
+                  {/* エピソード情報 - クリック可能エリア */}
+                  <div 
+                    className="flex-1 cursor-pointer hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors"
+                    onClick={() => handleShowNoteToggle(episode.episode_id)}
+                  >
                     <div className="block">
                       <div className="flex items-center justify-between">
                         <h3 className="text-lg font-medium text-gray-900">
                           {formatEpisodeTitle(episode.episode_id, episode.created_at)}
                         </h3>
                         
-                        {/* Show Note toggle button */}
-                        <button
-                          onClick={() => handleShowNoteToggle(episode.episode_id)}
-                          className="ml-2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                          aria-label={isExpanded ? 'Show Noteを閉じる' : 'Show Noteを開く'}
-                        >
+                        <div className="flex items-center text-sm text-gray-500">
+                          <span className="mr-1">Show Notes</span>
                           <svg 
-                            className={`h-5 w-5 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+                            className={`h-4 w-4 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
                             fill="currentColor" 
                             viewBox="0 0 20 20"
                           >
                             <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                           </svg>
-                        </button>
+                        </div>
                       </div>
                       
                       <div className="mt-2 flex justify-between items-center">
