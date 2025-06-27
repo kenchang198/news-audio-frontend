@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://news-audio-frontend.vercel.app"),
+  metadataBase: new URL("https://hatebu-tech-radio.vercel.app"),
   title: "はてブ Tech Radio - はてなブックマーク［テクノロジー］カテゴリの音声サービス",
   description: "はてなブックマーク［テクノロジー］カテゴリの人気記事を要約し、最新のテクノロジートレンドを音声でお届けします。",
   keywords: ["はてなブックマーク", "テクノロジー", "音声", "ニュース", "要約", "ポッドキャスト"],
@@ -26,13 +26,13 @@ export const metadata: Metadata = {
     telephone: false,
   },
   alternates: {
-    canonical: "https://news-audio-frontend.vercel.app",
+    canonical: "https://hatebu-tech-radio.vercel.app",
   },
   openGraph: {
     title: "はてブ Tech Radio - はてなブックマーク［テクノロジー］カテゴリの音声サービス",
     description: "はてなブックマーク［テクノロジー］カテゴリの人気記事を要約し、最新のテクノロジートレンドを音声でお届けします。",
     type: "website",
-    url: "https://news-audio-frontend.vercel.app",
+    url: "https://hatebu-tech-radio.vercel.app",
     locale: "ja_JP",
     siteName: "はてブ Tech Radio",
     images: [
