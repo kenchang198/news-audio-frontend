@@ -74,7 +74,7 @@ export default function Home() {
     <Layout>
       <div className="mb-6">
         <p className="text-sm text-gray-500">
-          はてなブックマーク［テクノロジー］カテゴリの人気記事を要約し、最新のテクノロジートレンドを音声でお届けします。
+          <a href="https://b.hatena.ne.jp/hotentry/it" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700">はてなブックマーク［テクノロジー］カテゴリの人気記事</a>を要約し、最新のテクノロジートレンドを音声でお届けします。
         </p>
         {totalEpisodes > 0 && (
           <p className="mt-1 text-sm text-gray-500">
