@@ -3,7 +3,6 @@ import { EpisodeSummary, Episode } from '@/types';
 import { getEpisodeAudioUrl, fetchEpisodeById } from '@/services/news/newsService';
 import { useAudio } from '@/contexts/AudioContext';
 import { formatEpisodeTitle } from '@/utils/dateUtils';
-import { preloadAudio } from '@/utils/audioPlayer';
 
 interface EpisodeListProps {
   episodes: EpisodeSummary[];
@@ -28,29 +27,6 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ episodes }) => {
   const [episodeDetails, setEpisodeDetails] = useState<Record<string, Episode>>({});
   const [loadingDetails, setLoadingDetails] = useState<Set<string>>(new Set());
 
-  // エピソード一覧が読み込まれたら音声をプリロード
-  useEffect(() => {
-    const preloadTopEpisodes = async () => {
-      // 最初の3つのエピソードをプリロード
-      const topEpisodes = episodes.slice(0, 3);
-      
-      await Promise.allSettled(
-        topEpisodes.map(async (episode) => {
-          try {
-            const audioUrl = getEpisodeAudioUrl(episode.episode_id);
-            await preloadAudio(audioUrl);
-            console.log(`Preloaded episode: ${episode.episode_id}`);
-          } catch (error) {
-            console.error(`Failed to preload episode ${episode.episode_id}:`, error);
-          }
-        })
-      );
-    };
-
-    if (episodes.length > 0) {
-      preloadTopEpisodes();
-    }
-  }, [episodes]);
 
   // 現在再生中のエピソードの状態を監視
   useEffect(() => {

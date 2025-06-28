@@ -4,12 +4,14 @@ import React, { useEffect, useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import EpisodeList from '@/components/episodes/EpisodeList';
 import Pagination from '@/components/ui/Pagination';
-import { fetchEpisodesList } from '@/services/news/newsService';
+import { fetchEpisodesList, getEpisodeAudioUrl } from '@/services/news/newsService';
 import { EpisodeSummary } from '@/types';
+import { preloadAudio } from '@/utils/audioPlayer';
 
 export default function Home() {
   const [episodes, setEpisodes] = useState<EpisodeSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPreloadingAudio, setIsPreloadingAudio] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -47,6 +49,31 @@ export default function Home() {
       setTotalEpisodes(allEpisodes.length);
       
       console.log(`Loaded ${paginatedEpisodes.length} episodes for page ${page} (total: ${allEpisodes.length})`);
+      
+      // 初回アクセス時（1ページ目）は全エピソードの音声ファイルをプリロード
+      if (page === 1) {
+        setIsPreloadingAudio(true);
+        console.log('Starting audio preload for first page episodes...');
+        
+        try {
+          await Promise.allSettled(
+            paginatedEpisodes.map(async (episode) => {
+              try {
+                const audioUrl = getEpisodeAudioUrl(episode.episode_id);
+                await preloadAudio(audioUrl);
+                console.log(`Preloaded episode: ${episode.episode_id}`);
+              } catch (error) {
+                console.error(`Failed to preload episode ${episode.episode_id}:`, error);
+              }
+            })
+          );
+          console.log('Audio preload completed for first page');
+        } catch (error) {
+          console.error('Audio preload failed:', error);
+        } finally {
+          setIsPreloadingAudio(false);
+        }
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError(`エピソードの取得に失敗しました: ${errorMessage}`);
@@ -83,9 +110,12 @@ export default function Home() {
         )}
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center py-12">
+      {isLoading || isPreloadingAudio ? (
+        <div className="flex flex-col items-center justify-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          <p className="mt-4 text-sm text-gray-600">
+            {isLoading ? 'エピソードを読み込み中...' : '音声ファイルを準備中...'}
+          </p>
         </div>
       ) : error ? (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 my-4">
