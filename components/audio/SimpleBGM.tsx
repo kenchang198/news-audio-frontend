@@ -12,7 +12,7 @@ export const SimpleBGM = ({ isPlaying }: SimpleBGMProps) => {
     if (!audio) return;
 
     // 初期化時に音量を設定
-    audio.volume = 0.06;
+    // audio.volume = 0.15;
 
     if (isPlaying) {
       // 音声再生開始
@@ -37,9 +37,6 @@ export const SimpleBGM = ({ isPlaying }: SimpleBGMProps) => {
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-
-    // 音量を初期設定
-    audio.volume = 0.15;
 
     // エラーハンドリング
     const handleError = (event: Event) => {
