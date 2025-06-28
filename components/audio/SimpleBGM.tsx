@@ -12,7 +12,7 @@ export const SimpleBGM = ({ isPlaying }: SimpleBGMProps) => {
     if (!audio) return;
 
     // 初期化時に音量を設定
-    audio.volume = 0.15;
+    audio.volume = 0.06;
 
     if (isPlaying) {
       // 音声再生開始
