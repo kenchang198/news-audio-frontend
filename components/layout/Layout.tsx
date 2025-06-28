@@ -18,6 +18,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </main>
         <FooterPlayer />
+        <footer className="bg-white border-t border-gray-200 py-4 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-xs text-gray-500 space-y-1">
+              <p>※1. コンテンツの生成・読み上げはAIが自動で行っているため、情報に誤りが含まれる場合があります。</p>
+              <p>※2. 当サービスは<a href="https://b.hatena.ne.jp/hotentry/it" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700">はてなブックマーク［テクノロジー］カテゴリの人気記事</a>を基にしたサービスですが、公式サイトではありません。</p>
+            </div>
+          </div>
+        </footer>
       </div>
     </AudioProvider>
   );
