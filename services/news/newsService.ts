@@ -172,7 +172,7 @@ export const fetchEpisodeById = async (episodeId: string) => {
 /**
  * 記事の英語音声URLを取得する
  */
-export const getEnglishAudioUrl = (article: Article, episodeId?: string) => {
+const getEnglishAudioUrl = (article: Article, episodeId?: string) => {
   // S3バケット直参照方式を使用する場合
   if (episodeId && !USE_MOCK_DATA) {
     const dateStr = extractDateFromEpisodeId(episodeId);
@@ -195,7 +195,7 @@ export const getEnglishAudioUrl = (article: Article, episodeId?: string) => {
 /**
  * 記事の日本語音声URLを取得する
  */
-export const getJapaneseAudioUrl = (article: Article, episodeId?: string) => {
+const getJapaneseAudioUrl = (article: Article, episodeId?: string) => {
   // S3バケット直参照方式を使用する場合
   if (episodeId && !USE_MOCK_DATA) {
     const dateStr = extractDateFromEpisodeId(episodeId);
@@ -229,44 +229,4 @@ export const getEpisodeAudioUrl = (episodeId: string): string => {
   // モックデータの場合は従来通り
   console.log(`Using mock data for episode: ${episodeId}`);
   return `/mock/audio/episode_${episodeId}.mp3`;
-};
-
-/**
- * エピソード全体の英語音声URLのリストを取得する
- */
-export const getEpisodeEnglishAudioUrls = (episode: Episode) => {
-  if (!episode || !episode.articles || !Array.isArray(episode.articles)) {
-    return [];
-  }
-  
-  // S3バケット直参照方式の場合は、エピソード全体で一つの音声ファイル
-  if (!USE_MOCK_DATA) {
-    const audioUrl = getEpisodeAudioUrl(episode.episode_id);
-    return [audioUrl];
-  }
-  
-  // モックデータの場合は従来通り記事ごとの音声URL
-  return episode.articles
-    .filter(article => article.audio_url)
-    .map(article => getEnglishAudioUrl(article, episode.episode_id));
-};
-
-/**
- * エピソード全体の日本語音声URLのリストを取得する
- */
-export const getEpisodeJapaneseAudioUrls = (episode: Episode) => {
-  if (!episode || !episode.articles || !Array.isArray(episode.articles)) {
-    return [];
-  }
-  
-  // S3バケット直参照方式の場合は、エピソード全体で一つの音声ファイル
-  if (!USE_MOCK_DATA) {
-    const audioUrl = getEpisodeAudioUrl(episode.episode_id);
-    return [audioUrl];
-  }
-  
-  // モックデータの場合は従来通り記事ごとの音声URL
-  return episode.articles
-    .filter(article => article.audio_url)
-    .map(article => getJapaneseAudioUrl(article, episode.episode_id));
 };
